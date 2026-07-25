@@ -83,6 +83,7 @@ function EpisodePage() {
   const [messages, setMessages] = useState<ChatMessage[]>(initial);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const scrollerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -90,6 +91,7 @@ function EpisodePage() {
   useEffect(() => {
     const saved = loadMessages(episode.id);
     setMessages(saved.length ? saved : initial);
+    setSavedIds(new Set(loadSavedInsights().map((i) => i.id)));
   }, [episode.id, initial]);
 
   useEffect(() => {
@@ -104,8 +106,30 @@ function EpisodePage() {
     inputRef.current?.focus();
   }, [episode.id]);
 
-  const send = (raw: string) => {
-    const text = raw.trim();
+  const toggleSave = (assistantMsg: ChatMessage) => {
+    if (assistantMsg.id === "seed") return;
+    const idx = messages.findIndex((m) => m.id === assistantMsg.id);
+    const prevUser = [...messages.slice(0, idx)].reverse().find((m) => m.role === "user");
+    const question = prevUser?.content ?? "Chat insight";
+    const next = new Set(savedIds);
+    if (savedIds.has(assistantMsg.id)) {
+      removeSavedInsight(assistantMsg.id);
+      next.delete(assistantMsg.id);
+    } else {
+      saveInsight({
+        id: assistantMsg.id,
+        episodeId: episode.id,
+        episodeTitle: episode.title,
+        podcastTitle: podcast.title,
+        question,
+        answer: assistantMsg.content,
+        savedAt: Date.now(),
+      });
+      next.add(assistantMsg.id);
+    }
+    setSavedIds(next);
+  };
+
     if (!text || thinking) return;
     const userMsg: ChatMessage = {
       id: `u-${Date.now()}`,
