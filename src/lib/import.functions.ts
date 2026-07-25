@@ -6,6 +6,11 @@ const Input = z.object({
   url: z.string().url().max(2000),
 });
 
+const TranscriptInput = z.object({
+  transcript: z.string().min(50).max(500_000),
+  title: z.string().max(300).optional(),
+});
+
 function serverSupabase() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_PUBLISHABLE_KEY;
@@ -151,7 +156,6 @@ export const importEpisode = createServerFn({ method: "POST" })
         .eq("id", episodeId);
       if (error) throw new Error(`Episode finalize failed: ${error.message}`);
 
-      // Sync podcast category to the analyzed suggestion (only if still default).
       await sb
         .from("podcasts")
         .update({ category: analysis.suggestedCategory })
@@ -160,6 +164,76 @@ export const importEpisode = createServerFn({ method: "POST" })
     }
 
     return { episodeId, reused: false };
+  });
+
+export const importTranscript = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => TranscriptInput.parse(input))
+  .handler(async ({ data }) => {
+    const lovableKey = process.env.LOVABLE_API_KEY;
+    if (!lovableKey) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const { analyzeTranscript, slugify } = await import("./import.server");
+    const sb = serverSupabase();
+
+    const transcript = data.transcript.trim();
+    const providedTitle = data.title?.trim();
+
+    // Analyze first so we can derive a useful title/category.
+    const analysis = await analyzeTranscript(
+      transcript,
+      providedTitle || "Pasted transcript",
+      lovableKey,
+    );
+
+    const derivedTitle =
+      providedTitle ||
+      (analysis.summary
+        ? analysis.summary.split(/[.!?]/)[0].slice(0, 100).trim()
+        : "") ||
+      `Transcript ${new Date().toLocaleDateString()}`;
+
+    const podcastId = "pasted-transcripts";
+    {
+      const { error } = await sb.from("podcasts").upsert(
+        {
+          id: podcastId,
+          title: "Pasted transcripts",
+          host: "",
+          cover_key: "studio",
+          category: analysis.suggestedCategory,
+        },
+        { onConflict: "id" },
+      );
+      if (error) throw new Error(`Podcast upsert failed: ${error.message}`);
+    }
+
+    const episodeId = `${podcastId}-${slugify(derivedTitle, "ep")}-${Date.now().toString(36)}`;
+    const nowIso = new Date().toISOString();
+    const { count } = await sb
+      .from("episodes")
+      .select("id", { count: "exact", head: true })
+      .eq("podcast_id", podcastId);
+    const epNumber = (count ?? 0) + 1;
+
+    const { error } = await sb.from("episodes").insert({
+      id: episodeId,
+      podcast_id: podcastId,
+      title: derivedTitle,
+      duration: "",
+      date_label: new Date().toLocaleDateString(),
+      ep_number: epNumber,
+      summary: analysis.summary,
+      questions: analysis.questions,
+      books: analysis.books,
+      recipes: analysis.recipes,
+      misc: analysis.misc,
+      transcript,
+      transcript_status: "ready",
+      imported_at: nowIso,
+    });
+    if (error) throw new Error(`Episode insert failed: ${error.message}`);
+
+    return { episodeId };
   });
 
 function hashCode(s: string): number {
