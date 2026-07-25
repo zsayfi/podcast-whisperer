@@ -130,7 +130,9 @@ function SavedPage() {
         </div>
       </section>
 
-      <h2 className="mb-3 font-serif text-lg font-bold text-primary">Featured episode</h2>
+      <h2 className="mb-3 font-serif text-lg font-bold text-primary">
+        {lastId ? "Latest episode you checked" : "Featured episode"}
+      </h2>
 
       <Link
         to="/episode/$episodeId"
