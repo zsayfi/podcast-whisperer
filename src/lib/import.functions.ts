@@ -9,6 +9,7 @@ const Input = z.object({
 const TranscriptInput = z.object({
   transcript: z.string().min(50).max(500_000),
   title: z.string().max(300).optional(),
+  podcastId: z.string().max(200).optional(),
   podcastName: z.string().max(200).optional(),
   episodeName: z.string().max(300).optional(),
 });
@@ -202,7 +203,17 @@ export const importTranscript = createServerFn({ method: "POST" })
 
     let podcastId: string | null = null;
 
-    if (providedPodcastName) {
+    if (data.podcastId) {
+      // Exact selection from the UI dropdown — trust it if it exists.
+      const { data: existing } = await sb
+        .from("podcasts")
+        .select("id")
+        .eq("id", data.podcastId)
+        .maybeSingle();
+      if (existing?.id) podcastId = existing.id;
+    }
+
+    if (!podcastId && providedPodcastName) {
       // Forgiving match against existing shows by normalized title.
       const { data: existingShows } = await sb
         .from("podcasts")
@@ -213,7 +224,7 @@ export const importTranscript = createServerFn({ method: "POST" })
           normalizedKey,
       );
       if (match) podcastId = match.id;
-    } else {
+    } else if (!podcastId && !providedPodcastName) {
       podcastId = "pasted-transcripts";
     }
 
@@ -247,7 +258,7 @@ export const importTranscript = createServerFn({ method: "POST" })
         category: analysis.suggestedCategory,
       });
       if (error) throw new Error(`Podcast insert failed: ${error.message}`);
-    } else if (!providedPodcastName) {
+    } else if (!providedPodcastName && !data.podcastId) {
       // Ensure the pasted-transcripts bucket exists.
       const { error } = await sb.from("podcasts").upsert(
         {

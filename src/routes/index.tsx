@@ -58,9 +58,12 @@ function HomePage() {
   const [activeFilter, setActiveFilter] = useState<PodcastCategory>("HEALTH");
   const [prompt, setPrompt] = useState("");
   const [transcript, setTranscript] = useState("");
+  const [selectedPodcastId, setSelectedPodcastId] = useState<string>("");
   const [podcastName, setPodcastName] = useState("");
   const [episodeName, setEpisodeName] = useState("");
   const [scan, setScan] = useState<ScanState>({ kind: "idle" });
+
+  const isNewPodcast = selectedPodcastId === "__new__";
 
   const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,13 +74,18 @@ function HomePage() {
       const { episodeId } = await importFn({
         data: {
           transcript: text,
-          podcastName: podcastName.trim() || undefined,
+          podcastId:
+            selectedPodcastId && !isNewPodcast ? selectedPodcastId : undefined,
+          podcastName: isNewPodcast
+            ? podcastName.trim() || undefined
+            : undefined,
           episodeName: episodeName.trim() || undefined,
         },
       });
       setTranscript("");
       setPodcastName("");
       setEpisodeName("");
+      setSelectedPodcastId("");
       setScan({ kind: "idle" });
       navigate({ to: "/episode/$episodeId", params: { episodeId } });
     } catch (err) {
@@ -176,14 +184,33 @@ function HomePage() {
         >
           <div className="flex items-center gap-2 rounded-full bg-background/70 px-4 py-2">
             <Mic className="h-4 w-4 shrink-0 text-primary" />
-            <input
-              value={podcastName}
-              onChange={(e) => setPodcastName(e.target.value)}
-              placeholder="Podcast name (e.g. The Wellness Scoop)"
+            <select
+              value={selectedPodcastId}
+              onChange={(e) => setSelectedPodcastId(e.target.value)}
               disabled={scan.kind === "working"}
-              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
-            />
+              className="h-10 min-w-0 flex-1 appearance-none bg-transparent text-sm text-foreground focus:outline-none disabled:opacity-60"
+            >
+              <option value="">Select a podcast (or add new)…</option>
+              {podcasts.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title}
+                </option>
+              ))}
+              <option value="__new__">+ Add new podcast</option>
+            </select>
           </div>
+          {isNewPodcast && (
+            <div className="flex items-center gap-2 rounded-full bg-background/70 px-4 py-2">
+              <Mic className="h-4 w-4 shrink-0 text-primary" />
+              <input
+                value={podcastName}
+                onChange={(e) => setPodcastName(e.target.value)}
+                placeholder="New podcast name"
+                disabled={scan.kind === "working"}
+                className="h-10 min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
+              />
+            </div>
+          )}
           <div className="flex items-center gap-2 rounded-full bg-background/70 px-4 py-2">
             <FileText className="h-4 w-4 shrink-0 text-primary" />
             <input
