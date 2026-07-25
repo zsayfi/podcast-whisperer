@@ -1,11 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search } from "lucide-react";
-import { useState } from "react";
+import {
+  Bookmark,
+  ChevronRight,
+  Clock,
+  Download,
+  LayoutGrid,
+  Radio,
+  Search,
+  Users,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { podcasts, type PodcastCategory } from "@/lib/mock-data";
+import { podcasts } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
-
-const filters: PodcastCategory[] = ["HEALTH", "TECH", "FOOD", "HISTORY", "FEMINISM", "RELATIONSHIPS"];
 
 export const Route = createFileRoute("/library")({
   head: () => ({
@@ -21,21 +28,39 @@ export const Route = createFileRoute("/library")({
   component: LibraryPage,
 });
 
+type MenuItem = {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  to: string;
+};
+
+const menu: MenuItem[] = [
+  { label: "Shows", icon: Radio, to: "/library" },
+  { label: "Channels", icon: Users, to: "/library" },
+  { label: "Categories", icon: LayoutGrid, to: "/library" },
+  { label: "Saved", icon: Bookmark, to: "/saved" },
+  { label: "Downloaded", icon: Download, to: "/library" },
+  { label: "Latest Episodes", icon: Clock, to: "/library" },
+];
+
 function LibraryPage() {
   const [query, setQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState<PodcastCategory>("HEALTH");
-  const filtered = podcasts.filter(
-    (p) =>
-      p.category === activeFilter &&
-      (p.title.toLowerCase().includes(query.toLowerCase()) ||
-        p.host.toLowerCase().includes(query.toLowerCase())),
+
+  const recentlyUpdated = useMemo(
+    () =>
+      podcasts.filter(
+        (p) =>
+          p.title.toLowerCase().includes(query.toLowerCase()) ||
+          p.host.toLowerCase().includes(query.toLowerCase()),
+      ),
+    [query],
   );
 
   return (
     <AppShell>
       <PageHeader title="Library" subtitle="Browse through podcasts" />
 
-      <label className="mb-4 flex items-center gap-3 rounded-2xl bg-card px-4 py-3 shadow-sm">
+      <label className="mb-5 flex items-center gap-3 rounded-2xl bg-card px-4 py-3 shadow-sm">
         <Search className="h-4 w-4 text-primary" />
         <input
           value={query}
@@ -45,58 +70,73 @@ function LibraryPage() {
         />
       </label>
 
-      <div className="mb-5 flex flex-wrap gap-2">
-        {filters.map((f) => {
-          const active = activeFilter === f;
-          return (
-            <button
-              key={f}
-              onClick={() => setActiveFilter(f)}
-              className={cn(
-                "rounded-full px-4 py-2 text-xs font-bold tracking-wide transition-colors",
-                active
-                  ? "bg-gold text-gold-foreground"
-                  : "bg-primary text-primary-foreground hover:bg-primary/90",
-              )}
-            >
-              {f}
-            </button>
-          );
-        })}
-      </div>
+      <nav aria-label="Library sections" className="mb-8">
+        <ul className="rounded-3xl bg-card p-2 shadow-sm">
+          {menu.map((item, index) => {
+            const Icon = item.icon;
+            const isLast = index === menu.length - 1;
+            return (
+              <li key={item.label}>
+                <Link
+                  to={item.to}
+                  className={cn(
+                    "flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-muted/50",
+                    !isLast && "border-b border-border",
+                  )}
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-background text-primary">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <span className="flex-1 font-serif text-base font-semibold text-primary">
+                    {item.label}
+                  </span>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
 
-      <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        {filtered.map((p) => (
-          <li key={p.id}>
-            <Link
-              to="/episode/$episodeId"
-              params={{ episodeId: p.episodes[0].id }}
-              className="group block overflow-hidden rounded-3xl bg-card shadow-sm transition-shadow hover:shadow-md"
-            >
-              <div className="aspect-square overflow-hidden">
-                <img
-                  src={p.cover}
-                  alt={p.title}
-                  loading="lazy"
-                  width={800}
-                  height={800}
-                  className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                />
-              </div>
-              <div className="p-3">
-                <p className="truncate font-serif text-base font-bold text-primary">{p.title}</p>
-                <p className="mt-1 truncate text-xs text-gold">{p.host}</p>
-                <p className="mt-1 text-xs text-card-foreground/70">{p.episodeCount} episodes</p>
-              </div>
-            </Link>
-          </li>
-        ))}
-        {filtered.length === 0 && (
-          <li className="col-span-full py-10 text-center text-sm text-muted-foreground">
-            No {activeFilter.toLowerCase()} podcasts {query ? `match "${query}"` : "yet"}.
-          </li>
+      <section aria-labelledby="recently-updated-heading">
+        <h2 id="recently-updated-heading" className="mb-4 font-serif text-2xl font-bold text-primary">
+          Recently Updated
+        </h2>
+        {recentlyUpdated.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            No podcasts match "{query}".
+          </p>
+        ) : (
+          <ul className="flex gap-4 overflow-x-auto pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {recentlyUpdated.map((p) => (
+              <li key={p.id} className="w-36 flex-shrink-0 sm:w-44">
+                <Link
+                  to="/episode/$episodeId"
+                  params={{ episodeId: p.episodes[0].id }}
+                  className="group block"
+                >
+                  <div className="overflow-hidden rounded-2xl bg-card shadow-sm">
+                    <div className="aspect-square overflow-hidden">
+                      <img
+                        src={p.cover}
+                        alt={p.title}
+                        loading="lazy"
+                        width={400}
+                        height={400}
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="p-3">
+                      <p className="truncate font-serif text-sm font-bold text-primary">{p.title}</p>
+                      <p className="mt-0.5 truncate text-xs text-gold">{p.host}</p>
+                    </div>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
         )}
-      </ul>
+      </section>
     </AppShell>
   );
 }
