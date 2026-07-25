@@ -58,6 +58,8 @@ function HomePage() {
   const [activeFilter, setActiveFilter] = useState<PodcastCategory>("HEALTH");
   const [prompt, setPrompt] = useState("");
   const [transcript, setTranscript] = useState("");
+  const [podcastName, setPodcastName] = useState("");
+  const [episodeName, setEpisodeName] = useState("");
   const [scan, setScan] = useState<ScanState>({ kind: "idle" });
 
   const handleScan = async (e: React.FormEvent) => {
@@ -66,8 +68,16 @@ function HomePage() {
     if (!text || scan.kind === "working") return;
     setScan({ kind: "working", label: "Analyzing transcript\u2026" });
     try {
-      const { episodeId } = await importFn({ data: { transcript: text } });
+      const { episodeId } = await importFn({
+        data: {
+          transcript: text,
+          podcastName: podcastName.trim() || undefined,
+          episodeName: episodeName.trim() || undefined,
+        },
+      });
       setTranscript("");
+      setPodcastName("");
+      setEpisodeName("");
       setScan({ kind: "idle" });
       navigate({ to: "/episode/$episodeId", params: { episodeId } });
     } catch (err) {
@@ -75,6 +85,7 @@ function HomePage() {
       setScan({ kind: "error", message });
     }
   };
+
 
 
   return (
