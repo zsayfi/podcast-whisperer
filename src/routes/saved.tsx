@@ -1,9 +1,29 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronDown, Play, Clock, Calendar } from "lucide-react";
+import { ChevronDown, Play, Clock, Calendar, Sparkles, Bookmark } from "lucide-react";
 import { useState } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { featuredEpisode } from "@/lib/mock-data";
+import { featuredEpisode, podcasts } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+
+const favouritePodcasts = [podcasts[0], podcasts[1], podcasts[2], podcasts[4]];
+
+const savedInsights = [
+  {
+    tag: "MINDFULNESS",
+    source: "Ist das normal? \u00b7 Ep 18",
+    text: "Box breathing (4-4-4-4) and a five-senses grounding scan work best when practised before bed, not during a panic spike.",
+  },
+  {
+    tag: "NUTRITION",
+    source: "The Wellness Scoop \u00b7 Ep 42",
+    text: "Hide nutrient-dense ingredients (flaxseed, hemp, blended greens) inside foods kids already love \u2014 acceptance jumps up to 15\u00d7.",
+  },
+  {
+    tag: "COOKING",
+    source: "Deep Nutrition \u00b7 Ep 31",
+    text: "Use butter, ghee or olive oil for low heat; tallow or avocado oil for high-heat searing. Skip seed oils where you can.",
+  },
+];
 
 export const Route = createFileRoute("/saved")({
   head: () => ({
@@ -39,6 +59,39 @@ function SavedPage() {
   return (
     <AppShell>
       <PageHeader title="Favourites" subtitle="Your favourites recap" />
+
+      <section className="mb-6">
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="font-serif text-lg font-bold text-primary">Favourite podcasts</h2>
+          <span className="text-xs text-muted-foreground">{favouritePodcasts.length} saved</span>
+        </div>
+        <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2">
+          {favouritePodcasts.map((p) => (
+            <Link
+              key={p.id}
+              to="/episode/$episodeId"
+              params={{ episodeId: p.episodes[0].id }}
+              className="w-32 shrink-0 snap-start"
+            >
+              <div className="overflow-hidden rounded-2xl shadow-sm">
+                <img
+                  src={p.cover}
+                  alt={p.title}
+                  loading="lazy"
+                  width={400}
+                  height={400}
+                  className="aspect-square w-full object-cover"
+                />
+              </div>
+              <p className="mt-2 line-clamp-2 text-xs font-semibold text-primary">{p.title}</p>
+              <p className="text-[10px] text-muted-foreground">{p.episodeCount} episodes</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <h2 className="mb-3 font-serif text-lg font-bold text-primary">Featured episode</h2>
+
 
       <Link
         to="/episode/$episodeId"
@@ -126,6 +179,30 @@ function SavedPage() {
           </li>
         )}
       </ul>
+
+      <section className="mt-8">
+        <div className="mb-3 flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-gold" />
+          <h2 className="font-serif text-lg font-bold text-primary">Saved by Lume</h2>
+        </div>
+        <p className="mb-4 text-xs text-muted-foreground">
+          Insights you bookmarked from your chats with the AI agent.
+        </p>
+        <ul className="space-y-3">
+          {savedInsights.map((insight, i) => (
+            <li key={i} className="rounded-2xl bg-card p-4 shadow-sm">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-primary">
+                  {insight.tag}
+                </span>
+                <Bookmark className="h-4 w-4 fill-gold text-gold" />
+              </div>
+              <p className="text-sm leading-relaxed text-card-foreground">{insight.text}</p>
+              <p className="mt-2 text-[11px] italic text-muted-foreground">{insight.source}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
     </AppShell>
   );
 }
