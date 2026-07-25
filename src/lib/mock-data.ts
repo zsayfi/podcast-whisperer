@@ -18,12 +18,21 @@ export type Episode = {
   misc: { title: string; note: string }[];
 };
 
+export type PodcastCategory =
+  | "HEALTH"
+  | "TECH"
+  | "FOOD"
+  | "HISTORY"
+  | "FEMINISM"
+  | "RELATIONSHIPS";
+
 export type Podcast = {
   id: string;
   title: string;
   host: string;
   cover: string;
   episodeCount: number;
+  category: PodcastCategory;
   episodes: Episode[];
 };
 
