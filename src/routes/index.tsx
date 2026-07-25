@@ -192,20 +192,40 @@ function HomePage() {
             </button>
           </form>
 
-          {ask.kind === "loading" && (
-            <div className="mt-4 flex items-center gap-2 rounded-2xl bg-background/70 p-3 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Searching your library…
-            </div>
-          )}
-          {ask.kind === "answer" && (
-            <div className="mt-4 rounded-2xl bg-background/70 p-4 text-sm leading-relaxed text-card-foreground whitespace-pre-wrap">
-              {ask.text}
-            </div>
-          )}
-          {ask.kind === "error" && (
-            <div className="mt-4 flex items-start gap-2 rounded-2xl bg-destructive/10 p-3 text-xs text-destructive">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <p>{ask.message}</p>
+          {ask.kind !== "idle" && (
+            <div className="mt-4 space-y-4">
+              <div className="rounded-2xl bg-background/70 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gold">
+                  Your question
+                </p>
+                <p className="mt-1 text-sm font-semibold text-card-foreground sm:text-base">
+                  {ask.question}
+                </p>
+              </div>
+
+              {ask.kind === "loading" && (
+                <div className="flex items-center gap-2 rounded-2xl bg-background/70 p-4 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Searching your library…
+                </div>
+              )}
+
+              {ask.kind === "answer" && (
+                <div className="rounded-2xl bg-background/70 p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary/70">
+                    Lume answer
+                  </p>
+                  <div className="prose prose-sm mt-2 max-w-none text-card-foreground prose-headings:font-serif prose-headings:text-primary prose-p:my-2 prose-p:leading-relaxed prose-strong:font-semibold prose-strong:text-card-foreground prose-a:text-primary prose-a:underline prose-a:underline-offset-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 [&_strong]:text-inherit">
+                    <ReactMarkdown>{ask.text}</ReactMarkdown>
+                  </div>
+                </div>
+              )}
+
+              {ask.kind === "error" && (
+                <div className="flex items-start gap-2 rounded-2xl bg-destructive/10 p-3 text-xs text-destructive">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <p>{ask.message}</p>
+                </div>
+              )}
             </div>
           )}
         </div>
