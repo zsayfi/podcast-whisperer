@@ -83,11 +83,11 @@ export const importEpisode = createServerFn({ method: "POST" })
     const episodeId = `${podcastId}-${slugify(resolved.title, "ep")}-${Date.now().toString(36)}`;
     const nowIso = new Date().toISOString();
     {
-      const { data: countRow } = await sb
+      const { count } = await sb
         .from("episodes")
         .select("id", { count: "exact", head: true })
         .eq("podcast_id", podcastId);
-      const epNumber = (countRow as unknown as number | null) ?? 1;
+      const epNumber = (count ?? 0) + 1;
       const { error } = await sb.from("episodes").insert({
         id: episodeId,
         podcast_id: podcastId,
