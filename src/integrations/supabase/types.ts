@@ -14,7 +14,233 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          episode_id: string
+          id: string
+          role: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          episode_id: string
+          id?: string
+          role: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          episode_id?: string
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      episode_visits: {
+        Row: {
+          episode_id: string
+          visited_at: string
+        }
+        Insert: {
+          episode_id: string
+          visited_at?: string
+        }
+        Update: {
+          episode_id?: string
+          visited_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "episode_visits_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: true
+            referencedRelation: "episodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      episodes: {
+        Row: {
+          books: Json
+          created_at: string
+          date_label: string
+          duration: string
+          ep_number: number
+          id: string
+          misc: Json
+          podcast_id: string
+          questions: Json
+          recipes: Json
+          sort_order: number
+          summary: string
+          title: string
+        }
+        Insert: {
+          books?: Json
+          created_at?: string
+          date_label: string
+          duration: string
+          ep_number: number
+          id: string
+          misc?: Json
+          podcast_id: string
+          questions?: Json
+          recipes?: Json
+          sort_order?: number
+          summary?: string
+          title: string
+        }
+        Update: {
+          books?: Json
+          created_at?: string
+          date_label?: string
+          duration?: string
+          ep_number?: number
+          id?: string
+          misc?: Json
+          podcast_id?: string
+          questions?: Json
+          recipes?: Json
+          sort_order?: number
+          summary?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "episodes_podcast_id_fkey"
+            columns: ["podcast_id"]
+            isOneToOne: false
+            referencedRelation: "podcasts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      favourite_podcasts: {
+        Row: {
+          created_at: string
+          podcast_id: string
+        }
+        Insert: {
+          created_at?: string
+          podcast_id: string
+        }
+        Update: {
+          created_at?: string
+          podcast_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favourite_podcasts_podcast_id_fkey"
+            columns: ["podcast_id"]
+            isOneToOne: true
+            referencedRelation: "podcasts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      podcasts: {
+        Row: {
+          category: string
+          cover_key: string
+          created_at: string
+          episode_count: number
+          host: string
+          id: string
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          category: string
+          cover_key: string
+          created_at?: string
+          episode_count?: number
+          host: string
+          id: string
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          category?: string
+          cover_key?: string
+          created_at?: string
+          episode_count?: number
+          host?: string
+          id?: string
+          sort_order?: number
+          title?: string
+        }
+        Relationships: []
+      }
+      saved_insights: {
+        Row: {
+          answer: string
+          created_at: string
+          episode_id: string
+          id: string
+          message_id: string | null
+          question: string
+          tag: string | null
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          episode_id: string
+          id?: string
+          message_id?: string | null
+          question: string
+          tag?: string | null
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          episode_id?: string
+          id?: string
+          message_id?: string | null
+          question?: string
+          tag?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_insights_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_insights_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: true
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_tags: {
+        Row: {
+          created_at: string
+          tag: string
+        }
+        Insert: {
+          created_at?: string
+          tag: string
+        }
+        Update: {
+          created_at?: string
+          tag?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
