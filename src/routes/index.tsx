@@ -58,9 +58,12 @@ function HomePage() {
   const [activeFilter, setActiveFilter] = useState<PodcastCategory>("HEALTH");
   const [prompt, setPrompt] = useState("");
   const [transcript, setTranscript] = useState("");
+  const [selectedPodcastId, setSelectedPodcastId] = useState<string>("");
   const [podcastName, setPodcastName] = useState("");
   const [episodeName, setEpisodeName] = useState("");
   const [scan, setScan] = useState<ScanState>({ kind: "idle" });
+
+  const isNewPodcast = selectedPodcastId === "__new__";
 
   const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,13 +74,18 @@ function HomePage() {
       const { episodeId } = await importFn({
         data: {
           transcript: text,
-          podcastName: podcastName.trim() || undefined,
+          podcastId:
+            selectedPodcastId && !isNewPodcast ? selectedPodcastId : undefined,
+          podcastName: isNewPodcast
+            ? podcastName.trim() || undefined
+            : undefined,
           episodeName: episodeName.trim() || undefined,
         },
       });
       setTranscript("");
       setPodcastName("");
       setEpisodeName("");
+      setSelectedPodcastId("");
       setScan({ kind: "idle" });
       navigate({ to: "/episode/$episodeId", params: { episodeId } });
     } catch (err) {
