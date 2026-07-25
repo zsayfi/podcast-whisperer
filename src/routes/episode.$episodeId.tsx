@@ -1,20 +1,22 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, Clock, Calendar, Play, Send, Bookmark } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import ReactMarkdown from "react-markdown";
 import { AppShell } from "@/components/app-shell";
 import { findEpisode } from "@/lib/mock-data";
 import {
   loadMessages,
   saveMessages,
-  mockAnswer,
   loadSavedInsights,
   saveInsight,
   removeSavedInsight,
   recordEpisodeVisit,
   type ChatMessage,
 } from "@/lib/chat-store";
+import { askEpisode } from "@/lib/chat.functions";
 import { cn } from "@/lib/utils";
+
 
 
 export const Route = createFileRoute("/episode/$episodeId")({
@@ -140,7 +142,9 @@ function EpisodePage() {
     setSavedIds(next);
   };
 
-  const send = (raw: string) => {
+  const ask = useServerFn(askEpisode);
+
+  const send = async (raw: string) => {
     const text = raw.trim();
     if (!text || thinking) return;
     const userMsg: ChatMessage = {
@@ -149,21 +153,39 @@ function EpisodePage() {
       content: text,
       createdAt: Date.now(),
     };
+    const history = messages
+      .filter((m) => m.id !== "seed")
+      .slice(-10)
+      .map((m) => ({ role: m.role, content: m.content }));
     setMessages((m) => [...m, userMsg]);
     setInput("");
     setThinking(true);
-    setTimeout(() => {
+    try {
+      const { answer } = await ask({
+        data: { episodeId: episode.id, question: text, history },
+      });
       const reply: ChatMessage = {
         id: `a-${Date.now()}`,
         role: "assistant",
-        content: mockAnswer(episode, text),
+        content: answer,
         createdAt: Date.now(),
       };
       setMessages((m) => [...m, reply]);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Something went wrong.";
+      const reply: ChatMessage = {
+        id: `a-${Date.now()}`,
+        role: "assistant",
+        content: `⚠️ ${msg}`,
+        createdAt: Date.now(),
+      };
+      setMessages((m) => [...m, reply]);
+    } finally {
       setThinking(false);
       requestAnimationFrame(() => inputRef.current?.focus());
-    }, 700);
+    }
   };
+
 
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
