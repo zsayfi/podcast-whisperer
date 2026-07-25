@@ -317,15 +317,20 @@ function EpisodePage() {
               }
             }}
             rows={1}
-            placeholder="Ask about this episode..."
-            className="min-h-10 flex-1 resize-none bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+            disabled={episode.transcriptStatus !== "ready"}
+            placeholder={
+              episode.transcriptStatus === "ready"
+                ? "Ask about this episode..."
+                : "Chat unlocks once transcription finishes\u2026"
+            }
+            className="min-h-10 flex-1 resize-none bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
           />
           <button
             type="submit"
-            disabled={!input.trim() || thinking}
+            disabled={!input.trim() || thinking || episode.transcriptStatus !== "ready"}
             className={cn(
               "grid h-10 w-10 shrink-0 place-items-center rounded-full transition-colors",
-              input.trim() && !thinking
+              input.trim() && !thinking && episode.transcriptStatus === "ready"
                 ? "bg-primary text-primary-foreground hover:bg-primary/90"
                 : "bg-muted text-muted-foreground",
             )}
@@ -338,6 +343,48 @@ function EpisodePage() {
     </div>
   );
 }
+
+function TranscriptStatusPanel({
+  status,
+  error,
+}: {
+  status: import("@/lib/data").TranscriptStatus;
+  error: string | null;
+}) {
+  if (status === "ready") return null;
+  if (status === "error") {
+    return (
+      <div className="mb-4 flex items-start gap-3 rounded-3xl bg-destructive/10 p-4 text-destructive shadow-sm sm:p-5">
+        <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">Transcription failed</p>
+          <p className="mt-1 text-xs opacity-90">
+            {error ?? "Something went wrong while processing this episode."}
+          </p>
+        </div>
+      </div>
+    );
+  }
+  const label =
+    status === "transcribing"
+      ? "Transcribing audio with Whisper\u2026"
+      : status === "analyzing"
+        ? "Analyzing the transcript\u2026"
+        : "Importing episode\u2026";
+  return (
+    <div className="mb-4 flex items-start gap-3 rounded-3xl bg-card p-4 shadow-sm sm:p-5">
+      <Loader2 className="mt-0.5 h-5 w-5 shrink-0 animate-spin text-primary" />
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-primary">{label}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          This can take up to a minute. You can leave this page open \u2014 the summary,
+          questions and chat unlock as soon as it's done.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 
 function MessageBubble({
   message,
