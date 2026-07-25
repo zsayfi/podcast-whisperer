@@ -19,7 +19,7 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-const filters = ["HEALTH", "ANALYSIS", "SUMMARY", "LEARN"] as const;
+const filters = ["HEALTH", "TECH", "FOOD", "HISTORY", "FEMINISM", "RELATIONSHIPS"] as const;
 
 function HomePage() {
   const recent = recentEpisodes();
