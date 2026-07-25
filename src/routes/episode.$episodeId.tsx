@@ -130,6 +130,8 @@ function EpisodePage() {
     setSavedIds(next);
   };
 
+  const send = (raw: string) => {
+    const text = raw.trim();
     if (!text || thinking) return;
     const userMsg: ChatMessage = {
       id: `u-${Date.now()}`,
