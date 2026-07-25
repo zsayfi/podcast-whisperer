@@ -13,6 +13,7 @@ import { Route as SavedRouteImport } from './routes/saved'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as LibraryRouteImport } from './routes/library'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SavedIndexRouteImport } from './routes/saved.index'
 import { Route as EpisodeEpisodeIdRouteImport } from './routes/episode.$episodeId'
 import { Route as SavedShowPodcastIdRouteImport } from './routes/saved.show.$podcastId'
 
@@ -36,6 +37,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SavedIndexRoute = SavedIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SavedRoute,
+} as any)
 const EpisodeEpisodeIdRoute = EpisodeEpisodeIdRouteImport.update({
   id: '/episode/$episodeId',
   path: '/episode/$episodeId',
@@ -53,14 +59,15 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/saved': typeof SavedRouteWithChildren
   '/episode/$episodeId': typeof EpisodeEpisodeIdRoute
+  '/saved/': typeof SavedIndexRoute
   '/saved/show/$podcastId': typeof SavedShowPodcastIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/library': typeof LibraryRoute
   '/profile': typeof ProfileRoute
-  '/saved': typeof SavedRouteWithChildren
   '/episode/$episodeId': typeof EpisodeEpisodeIdRoute
+  '/saved': typeof SavedIndexRoute
   '/saved/show/$podcastId': typeof SavedShowPodcastIdRoute
 }
 export interface FileRoutesById {
@@ -70,6 +77,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/saved': typeof SavedRouteWithChildren
   '/episode/$episodeId': typeof EpisodeEpisodeIdRoute
+  '/saved/': typeof SavedIndexRoute
   '/saved/show/$podcastId': typeof SavedShowPodcastIdRoute
 }
 export interface FileRouteTypes {
@@ -80,14 +88,15 @@ export interface FileRouteTypes {
     | '/profile'
     | '/saved'
     | '/episode/$episodeId'
+    | '/saved/'
     | '/saved/show/$podcastId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/library'
     | '/profile'
-    | '/saved'
     | '/episode/$episodeId'
+    | '/saved'
     | '/saved/show/$podcastId'
   id:
     | '__root__'
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/saved'
     | '/episode/$episodeId'
+    | '/saved/'
     | '/saved/show/$podcastId'
   fileRoutesById: FileRoutesById
 }
@@ -137,6 +147,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/saved/': {
+      id: '/saved/'
+      path: '/'
+      fullPath: '/saved/'
+      preLoaderRoute: typeof SavedIndexRouteImport
+      parentRoute: typeof SavedRoute
+    }
     '/episode/$episodeId': {
       id: '/episode/$episodeId'
       path: '/episode/$episodeId'
@@ -155,10 +172,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface SavedRouteChildren {
+  SavedIndexRoute: typeof SavedIndexRoute
   SavedShowPodcastIdRoute: typeof SavedShowPodcastIdRoute
 }
 
 const SavedRouteChildren: SavedRouteChildren = {
+  SavedIndexRoute: SavedIndexRoute,
   SavedShowPodcastIdRoute: SavedShowPodcastIdRoute,
 }
 
@@ -174,13 +193,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
