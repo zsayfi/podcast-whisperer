@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, Clock, Calendar, Play, Send, Bookmark } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -87,6 +87,14 @@ function EpisodePage() {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const scrollerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const router = useRouter();
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.history.back();
+    } else {
+      router.navigate({ to: "/library" });
+    }
+  };
 
   // Load per-episode thread on mount / episode change
   useEffect(() => {
@@ -161,13 +169,14 @@ function EpisodePage() {
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 pb-4 pt-6 sm:px-6 lg:max-w-3xl">
         <div className="mb-4 flex items-center gap-3">
-          <Link
-            to="/library"
+          <button
+            type="button"
+            onClick={handleBack}
             className="grid h-10 w-10 place-items-center rounded-full bg-card text-primary shadow-sm"
             aria-label="Back"
           >
             <ArrowLeft className="h-5 w-5" />
-          </Link>
+          </button>
           <div className="min-w-0">
             <p className="truncate text-[10px] font-bold uppercase tracking-wider text-gold">
               {podcast.title}
