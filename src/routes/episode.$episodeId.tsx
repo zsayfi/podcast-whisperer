@@ -202,7 +202,13 @@ function EpisodePage() {
           className="flex-1 space-y-4 overflow-y-auto rounded-3xl bg-card/40 p-4 sm:p-5"
         >
           {messages.map((m) => (
-            <MessageBubble key={m.id} message={m} />
+            <MessageBubble
+              key={m.id}
+              message={m}
+              saved={savedIds.has(m.id)}
+              canSave={m.role === "assistant" && m.id !== "seed"}
+              onToggleSave={() => toggleSave(m)}
+            />
           ))}
           {thinking && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
