@@ -1,14 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  Bookmark,
-  ChevronRight,
-  Clock,
-  Download,
-  LayoutGrid,
-  Radio,
-  Search,
-  Users,
-} from "lucide-react";
+import { ChevronRight, LayoutGrid, Radio, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { podcasts } from "@/lib/mock-data";
