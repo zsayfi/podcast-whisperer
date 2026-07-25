@@ -23,17 +23,19 @@ export const Route = createFileRoute("/library")({
 
 function LibraryPage() {
   const [query, setQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState<PodcastCategory>("HEALTH");
   const filtered = podcasts.filter(
     (p) =>
-      p.title.toLowerCase().includes(query.toLowerCase()) ||
-      p.host.toLowerCase().includes(query.toLowerCase()),
+      p.category === activeFilter &&
+      (p.title.toLowerCase().includes(query.toLowerCase()) ||
+        p.host.toLowerCase().includes(query.toLowerCase())),
   );
 
   return (
     <AppShell>
       <PageHeader title="Library" subtitle="Browse through podcasts" />
 
-      <label className="mb-6 flex items-center gap-3 rounded-2xl bg-card px-4 py-3 shadow-sm">
+      <label className="mb-4 flex items-center gap-3 rounded-2xl bg-card px-4 py-3 shadow-sm">
         <Search className="h-4 w-4 text-primary" />
         <input
           value={query}
