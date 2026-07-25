@@ -87,6 +87,14 @@ function EpisodePage() {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const scrollerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const router = useRouter();
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.history.back();
+    } else {
+      router.navigate({ to: "/library" });
+    }
+  };
 
   // Load per-episode thread on mount / episode change
   useEffect(() => {
