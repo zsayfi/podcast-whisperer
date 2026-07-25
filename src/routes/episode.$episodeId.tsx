@@ -274,7 +274,17 @@ function EpisodePage() {
   );
 }
 
-function MessageBubble({ message }: { message: ChatMessage }) {
+function MessageBubble({
+  message,
+  saved,
+  canSave,
+  onToggleSave,
+}: {
+  message: ChatMessage;
+  saved?: boolean;
+  canSave?: boolean;
+  onToggleSave?: () => void;
+}) {
   const isUser = message.role === "user";
   return (
     <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
@@ -289,7 +299,25 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         <div className="prose prose-sm max-w-none prose-p:my-1 prose-strong:font-semibold [&_strong]:text-inherit">
           <ReactMarkdown>{message.content}</ReactMarkdown>
         </div>
+        {canSave && (
+          <div className="mt-2 flex justify-end">
+            <button
+              onClick={onToggleSave}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors",
+                saved
+                  ? "bg-gold/20 text-gold"
+                  : "bg-primary/5 text-primary hover:bg-primary/10",
+              )}
+              aria-label={saved ? "Remove from saved" : "Save answer"}
+            >
+              <Bookmark className={cn("h-3 w-3", saved && "fill-current")} />
+              {saved ? "Saved" : "Save answer"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
