@@ -1,9 +1,29 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronDown, Play, Clock, Calendar } from "lucide-react";
+import { ChevronDown, Play, Clock, Calendar, Sparkles, Bookmark } from "lucide-react";
 import { useState } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { featuredEpisode } from "@/lib/mock-data";
+import { featuredEpisode, podcasts } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+
+const favouritePodcasts = [podcasts[0], podcasts[1], podcasts[2], podcasts[4]];
+
+const savedInsights = [
+  {
+    tag: "MINDFULNESS",
+    source: "Ist das normal? \u00b7 Ep 18",
+    text: "Box breathing (4-4-4-4) and a five-senses grounding scan work best when practised before bed, not during a panic spike.",
+  },
+  {
+    tag: "NUTRITION",
+    source: "The Wellness Scoop \u00b7 Ep 42",
+    text: "Hide nutrient-dense ingredients (flaxseed, hemp, blended greens) inside foods kids already love \u2014 acceptance jumps up to 15\u00d7.",
+  },
+  {
+    tag: "COOKING",
+    source: "Deep Nutrition \u00b7 Ep 31",
+    text: "Use butter, ghee or olive oil for low heat; tallow or avocado oil for high-heat searing. Skip seed oils where you can.",
+  },
+];
 
 export const Route = createFileRoute("/saved")({
   head: () => ({
