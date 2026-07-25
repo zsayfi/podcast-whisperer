@@ -33,7 +33,7 @@ function ShowsPage() {
         {podcasts.map((p) => (
           <li key={p.id}>
             <Link
-              to="/saved/show/$podcastId"
+              to="/library/show/$podcastId"
               params={{ podcastId: p.id }}
               className="group block"
             >

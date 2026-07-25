@@ -18,6 +18,7 @@ import { Route as LibraryShowsRouteImport } from './routes/library.shows'
 import { Route as LibraryCategoriesRouteImport } from './routes/library.categories'
 import { Route as EpisodeEpisodeIdRouteImport } from './routes/episode.$episodeId'
 import { Route as SavedShowPodcastIdRouteImport } from './routes/saved.show.$podcastId'
+import { Route as LibraryShowPodcastIdRouteImport } from './routes/library.show.$podcastId'
 
 const SavedRoute = SavedRouteImport.update({
   id: '/saved',
@@ -64,6 +65,11 @@ const SavedShowPodcastIdRoute = SavedShowPodcastIdRouteImport.update({
   path: '/show/$podcastId',
   getParentRoute: () => SavedRoute,
 } as any)
+const LibraryShowPodcastIdRoute = LibraryShowPodcastIdRouteImport.update({
+  id: '/show/$podcastId',
+  path: '/show/$podcastId',
+  getParentRoute: () => LibraryRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/library/categories': typeof LibraryCategoriesRoute
   '/library/shows': typeof LibraryShowsRoute
   '/saved/': typeof SavedIndexRoute
+  '/library/show/$podcastId': typeof LibraryShowPodcastIdRoute
   '/saved/show/$podcastId': typeof SavedShowPodcastIdRoute
 }
 export interface FileRoutesByTo {
@@ -84,6 +91,7 @@ export interface FileRoutesByTo {
   '/library/categories': typeof LibraryCategoriesRoute
   '/library/shows': typeof LibraryShowsRoute
   '/saved': typeof SavedIndexRoute
+  '/library/show/$podcastId': typeof LibraryShowPodcastIdRoute
   '/saved/show/$podcastId': typeof SavedShowPodcastIdRoute
 }
 export interface FileRoutesById {
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   '/library/categories': typeof LibraryCategoriesRoute
   '/library/shows': typeof LibraryShowsRoute
   '/saved/': typeof SavedIndexRoute
+  '/library/show/$podcastId': typeof LibraryShowPodcastIdRoute
   '/saved/show/$podcastId': typeof SavedShowPodcastIdRoute
 }
 export interface FileRouteTypes {
@@ -109,6 +118,7 @@ export interface FileRouteTypes {
     | '/library/categories'
     | '/library/shows'
     | '/saved/'
+    | '/library/show/$podcastId'
     | '/saved/show/$podcastId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/library/categories'
     | '/library/shows'
     | '/saved'
+    | '/library/show/$podcastId'
     | '/saved/show/$podcastId'
   id:
     | '__root__'
@@ -130,6 +141,7 @@ export interface FileRouteTypes {
     | '/library/categories'
     | '/library/shows'
     | '/saved/'
+    | '/library/show/$podcastId'
     | '/saved/show/$podcastId'
   fileRoutesById: FileRoutesById
 }
@@ -206,17 +218,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SavedShowPodcastIdRouteImport
       parentRoute: typeof SavedRoute
     }
+    '/library/show/$podcastId': {
+      id: '/library/show/$podcastId'
+      path: '/show/$podcastId'
+      fullPath: '/library/show/$podcastId'
+      preLoaderRoute: typeof LibraryShowPodcastIdRouteImport
+      parentRoute: typeof LibraryRoute
+    }
   }
 }
 
 interface LibraryRouteChildren {
   LibraryCategoriesRoute: typeof LibraryCategoriesRoute
   LibraryShowsRoute: typeof LibraryShowsRoute
+  LibraryShowPodcastIdRoute: typeof LibraryShowPodcastIdRoute
 }
 
 const LibraryRouteChildren: LibraryRouteChildren = {
   LibraryCategoriesRoute: LibraryCategoriesRoute,
   LibraryShowsRoute: LibraryShowsRoute,
+  LibraryShowPodcastIdRoute: LibraryShowPodcastIdRoute,
 }
 
 const LibraryRouteWithChildren =
