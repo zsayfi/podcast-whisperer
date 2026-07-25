@@ -335,7 +335,8 @@ Rules:
 - 4-8 suggested questions covering the key themes.
 - Books: real books mentioned. Recipes: cooking recipes OR wellness/mindfulness practices.
 - suggestedCategory: pick the best fit from the fixed list.
-- Output raw JSON, no markdown fences, no commentary.`;
+- Output raw JSON, no markdown fences, no commentary.
+- LANGUAGE: Detect the primary language of the transcript and write EVERY human-readable string value (summary, questions q/a, books title/author, recipes title/note, misc title/note) in that same language. If the transcript is primarily Russian, write in Russian. If primarily German, write in German. Do NOT translate into English. Only the JSON keys and the "suggestedCategory" enum value stay in English. Preserve proper names (book titles, author names) in their original form.`;
 
 export async function analyzeTranscript(
   transcript: string,
