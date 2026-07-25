@@ -104,6 +104,7 @@ export const podcasts: Podcast[] = [
     host: "Dr. Sarah Weber",
     cover: normalImg,
     episodeCount: 18,
+    category: "FEMINISM",
     episodes: [
       {
         id: "idn-18",
