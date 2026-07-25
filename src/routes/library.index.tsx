@@ -34,6 +34,7 @@ const menu: MenuItem[] = [
 ];
 
 function LibraryPage() {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const { data: podcasts = [] } = useQuery({
     queryKey: ["podcasts-with-episodes"],
