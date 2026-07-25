@@ -166,7 +166,7 @@ function HomePage() {
               placeholder="Paste the full episode transcript here\u2026"
               disabled={scan.kind === "working"}
               rows={1}
-              className="h-10 min-w-0 flex-1 resize-none overflow-y-auto whitespace-nowrap bg-transparent py-2.5 text-sm leading-5 text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
+              className="h-10 min-w-0 flex-1 resize-none overflow-hidden overflow-x-auto whitespace-nowrap bg-transparent py-2.5 text-sm leading-5 text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
             />
           </div>
           <button
