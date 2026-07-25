@@ -1,0 +1,169 @@
+import { createServerFn } from "@tanstack/react-start";
+import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
+
+const Input = z.object({
+  url: z.string().url().max(2000),
+});
+
+function serverSupabase() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !key) throw new Error("Supabase server env is not configured");
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      fetch: (input, init) => {
+        const h = new Headers(init?.headers);
+        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) {
+          h.delete("Authorization");
+        }
+        h.set("apikey", key);
+        return fetch(input, { ...init, headers: h });
+      },
+    },
+  });
+}
+
+export const importEpisode = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => Input.parse(input))
+  .handler(async ({ data }) => {
+    const lovableKey = process.env.LOVABLE_API_KEY;
+    if (!lovableKey) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const {
+      resolveEpisode,
+      downloadAudio,
+      transcribeAudio,
+      analyzeTranscript,
+      slugify,
+    } = await import("./import.server");
+
+    const sb = serverSupabase();
+
+    // De-dupe: if we already imported this source URL, return it.
+    {
+      const { data: existing } = await sb
+        .from("episodes")
+        .select("id, transcript_status")
+        .eq("source_url", data.url)
+        .maybeSingle();
+      if (existing?.id && existing.transcript_status === "ready") {
+        return { episodeId: existing.id, reused: true };
+      }
+    }
+
+    // 1. Resolve the audio URL + metadata.
+    const resolved = await resolveEpisode(data.url);
+
+    // 2. Upsert podcast row.
+    const podcastId = slugify(
+      resolved.rssUrl ?? resolved.podcastTitle ?? "podcast",
+    );
+    const coverKey = ["wellness", "normal", "nutrition", "studio", "kitchen"][
+      Math.abs(hashCode(podcastId)) % 5
+    ];
+    {
+      const { error } = await sb.from("podcasts").upsert(
+        {
+          id: podcastId,
+          title: resolved.podcastTitle || "Podcast",
+          host: resolved.podcastHost || "",
+          cover_key: coverKey,
+          category: "HEALTH",
+          rss_url: resolved.rssUrl ?? null,
+          website_url: resolved.websiteUrl ?? null,
+        },
+        { onConflict: "id" },
+      );
+      if (error) throw new Error(`Podcast upsert failed: ${error.message}`);
+    }
+
+    // 3. Create episode shell (status: transcribing).
+    const episodeId = `${podcastId}-${slugify(resolved.title, "ep")}-${Date.now().toString(36)}`;
+    const nowIso = new Date().toISOString();
+    {
+      const { data: countRow } = await sb
+        .from("episodes")
+        .select("id", { count: "exact", head: true })
+        .eq("podcast_id", podcastId);
+      const epNumber = (countRow as unknown as number | null) ?? 1;
+      const { error } = await sb.from("episodes").insert({
+        id: episodeId,
+        podcast_id: podcastId,
+        title: resolved.title,
+        duration: resolved.durationLabel ?? "",
+        date_label: resolved.dateLabel ?? new Date().toLocaleDateString(),
+        ep_number: typeof epNumber === "number" ? epNumber + 1 : 1,
+        summary: "",
+        source_url: data.url,
+        audio_url: resolved.audioUrl,
+        transcript: "",
+        transcript_status: "transcribing",
+        imported_at: nowIso,
+      });
+      if (error) throw new Error(`Episode insert failed: ${error.message}`);
+    }
+
+    async function markError(msg: string): Promise<never> {
+      await sb
+        .from("episodes")
+        .update({ transcript_status: "error", transcript_error: msg })
+        .eq("id", episodeId);
+      throw new Error(msg);
+    }
+
+    // 4. Download + transcribe.
+    let transcript = "";
+    try {
+      const audio = await downloadAudio(resolved.audioUrl);
+      transcript = await transcribeAudio(audio, resolved.audioUrl, lovableKey);
+    } catch (err) {
+      await markError(err instanceof Error ? err.message : String(err));
+    }
+
+    await sb
+      .from("episodes")
+      .update({ transcript, transcript_status: "analyzing" })
+      .eq("id", episodeId);
+
+    // 5. Analyze.
+    let analysis;
+    try {
+      analysis = await analyzeTranscript(transcript, resolved.title, lovableKey);
+    } catch (err) {
+      await markError(err instanceof Error ? err.message : String(err));
+    }
+    if (!analysis) return { episodeId };
+
+    // 6. Persist analysis + mark ready.
+    {
+      const { error } = await sb
+        .from("episodes")
+        .update({
+          summary: analysis.summary,
+          questions: analysis.questions,
+          books: analysis.books,
+          recipes: analysis.recipes,
+          misc: analysis.misc,
+          transcript_status: "ready",
+        })
+        .eq("id", episodeId);
+      if (error) throw new Error(`Episode finalize failed: ${error.message}`);
+
+      // Sync podcast category to the analyzed suggestion (only if still default).
+      await sb
+        .from("podcasts")
+        .update({ category: analysis.suggestedCategory })
+        .eq("id", podcastId)
+        .eq("category", "HEALTH");
+    }
+
+    return { episodeId, reused: false };
+  });
+
+function hashCode(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return h;
+}
