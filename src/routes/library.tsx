@@ -45,6 +45,26 @@ function LibraryPage() {
         />
       </label>
 
+      <div className="mb-5 flex flex-wrap gap-2">
+        {filters.map((f) => {
+          const active = activeFilter === f;
+          return (
+            <button
+              key={f}
+              onClick={() => setActiveFilter(f)}
+              className={cn(
+                "rounded-full px-4 py-2 text-xs font-bold tracking-wide transition-colors",
+                active
+                  ? "bg-gold text-gold-foreground"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90",
+              )}
+            >
+              {f}
+            </button>
+          );
+        })}
+      </div>
+
       <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         {filtered.map((p) => (
           <li key={p.id}>
