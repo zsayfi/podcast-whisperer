@@ -106,7 +106,7 @@ export async function listPodcasts(): Promise<Podcast[]> {
     .select("*")
     .order("sort_order");
   if (error) throw error;
-  return (data as PodcastRow[]).map(mapPodcast);
+  return (data as unknown as PodcastRow[]).map(mapPodcast);
 }
 
 export async function listPodcastsWithEpisodes(): Promise<PodcastWithEpisodes[]> {
@@ -116,7 +116,7 @@ export async function listPodcastsWithEpisodes(): Promise<PodcastWithEpisodes[]>
   ]);
   if (epsRes.error) throw epsRes.error;
   const byPodcast = new Map<string, Episode[]>();
-  for (const r of epsRes.data as EpisodeRow[]) {
+  for (const r of epsRes.data as unknown as EpisodeRow[]) {
     const ep = mapEpisode(r);
     if (!byPodcast.has(ep.podcastId)) byPodcast.set(ep.podcastId, []);
     byPodcast.get(ep.podcastId)!.push(ep);
@@ -139,8 +139,8 @@ export async function getPodcast(id: string): Promise<PodcastWithEpisodes | null
     .order("sort_order");
   if (e2) throw e2;
   return {
-    ...mapPodcast(p as PodcastRow),
-    episodes: (eps as EpisodeRow[]).map(mapEpisode),
+    ...mapPodcast(p as unknown as PodcastRow),
+    episodes: (eps as unknown as EpisodeRow[]).map(mapEpisode),
   };
 }
 
@@ -157,13 +157,13 @@ export async function getEpisode(
   const { data: p, error: pe } = await supabase
     .from("podcasts")
     .select("*")
-    .eq("id", (ep as EpisodeRow).podcast_id)
+    .eq("id", (ep as unknown as EpisodeRow).podcast_id)
     .maybeSingle();
   if (pe) throw pe;
   if (!p) return null;
   return {
-    podcast: mapPodcast(p as PodcastRow),
-    episode: mapEpisode(ep as EpisodeRow),
+    podcast: mapPodcast(p as unknown as PodcastRow),
+    episode: mapEpisode(ep as unknown as EpisodeRow),
   };
 }
 
