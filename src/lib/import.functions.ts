@@ -203,7 +203,17 @@ export const importTranscript = createServerFn({ method: "POST" })
 
     let podcastId: string | null = null;
 
-    if (providedPodcastName) {
+    if (data.podcastId) {
+      // Exact selection from the UI dropdown — trust it if it exists.
+      const { data: existing } = await sb
+        .from("podcasts")
+        .select("id")
+        .eq("id", data.podcastId)
+        .maybeSingle();
+      if (existing?.id) podcastId = existing.id;
+    }
+
+    if (!podcastId && providedPodcastName) {
       // Forgiving match against existing shows by normalized title.
       const { data: existingShows } = await sb
         .from("podcasts")
@@ -214,7 +224,7 @@ export const importTranscript = createServerFn({ method: "POST" })
           normalizedKey,
       );
       if (match) podcastId = match.id;
-    } else {
+    } else if (!podcastId && !providedPodcastName) {
       podcastId = "pasted-transcripts";
     }
 
