@@ -1,10 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ChevronRight, LayoutGrid, Radio, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { listPodcastsWithEpisodes } from "@/lib/data";
 import { cn } from "@/lib/utils";
+
+type LibraryMenuTo = "/library/shows" | "/library/categories";
 
 export const Route = createFileRoute("/library/")({
   head: () => ({
