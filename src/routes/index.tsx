@@ -26,6 +26,21 @@ function HomePage() {
   const fresh = newEpisodes();
   const [activeFilter, setActiveFilter] = useState<(typeof filters)[number]>("HEALTH");
   const [prompt, setPrompt] = useState("");
+  const [podcastUrl, setPodcastUrl] = useState("");
+  const [scanState, setScanState] = useState<"idle" | "scanning" | "done">("idle");
+
+  const handleScan = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!podcastUrl.trim()) return;
+    setScanState("scanning");
+    setTimeout(() => {
+      setScanState("done");
+      setTimeout(() => {
+        setScanState("idle");
+        setPodcastUrl("");
+      }, 2000);
+    }, 1800);
+  };
 
   return (
     <AppShell>
