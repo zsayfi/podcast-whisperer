@@ -74,8 +74,8 @@ function SavedPage() {
           {favouritePodcasts.map((p) => (
             <Link
               key={p.id}
-              to="/episode/$episodeId"
-              params={{ episodeId: p.episodes[0].id }}
+              to="/saved/show/$podcastId"
+              params={{ podcastId: p.id }}
               className="w-32 shrink-0 snap-start"
             >
               <div className="overflow-hidden rounded-2xl shadow-sm">
