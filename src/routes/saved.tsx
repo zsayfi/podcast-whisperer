@@ -46,6 +46,8 @@ function SavedPage() {
   const { podcast, episode } = featuredEpisode();
   const [tab, setTab] = useState<Tab>("QUESTIONS");
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [activeTag, setActiveTag] = useState<string>("ALL");
+
 
   const items =
     tab === "QUESTIONS"
@@ -188,21 +190,58 @@ function SavedPage() {
         <p className="mb-4 text-xs text-muted-foreground">
           Insights you bookmarked from your chats with the AI agent.
         </p>
-        <ul className="space-y-3">
-          {savedInsights.map((insight, i) => (
-            <li key={i} className="rounded-2xl bg-card p-4 shadow-sm">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-primary">
-                  {insight.tag}
-                </span>
-                <Bookmark className="h-4 w-4 fill-gold text-gold" />
+
+        {(() => {
+          const tags = ["ALL", ...Array.from(new Set(savedInsights.map((i) => i.tag)))];
+          const filtered =
+            activeTag === "ALL"
+              ? savedInsights
+              : savedInsights.filter((i) => i.tag === activeTag);
+          return (
+            <>
+              <div className="mb-4 flex flex-wrap gap-2">
+                {tags.map((t) => {
+                  const active = activeTag === t;
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => setActiveTag(t)}
+                      className={cn(
+                        "rounded-full px-3 py-1.5 text-[11px] font-bold tracking-wide transition-colors",
+                        active
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-card text-primary hover:bg-primary/10",
+                      )}
+                    >
+                      {t}
+                    </button>
+                  );
+                })}
               </div>
-              <p className="text-sm leading-relaxed text-card-foreground">{insight.text}</p>
-              <p className="mt-2 text-[11px] italic text-muted-foreground">{insight.source}</p>
-            </li>
-          ))}
-        </ul>
+              <ul className="space-y-3">
+                {filtered.map((insight, i) => (
+                  <li key={i} className="rounded-2xl bg-card p-4 shadow-sm">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-primary">
+                        {insight.tag}
+                      </span>
+                      <Bookmark className="h-4 w-4 fill-gold text-gold" />
+                    </div>
+                    <p className="text-sm leading-relaxed text-card-foreground">{insight.text}</p>
+                    <p className="mt-2 text-[11px] italic text-muted-foreground">{insight.source}</p>
+                  </li>
+                ))}
+                {filtered.length === 0 && (
+                  <li className="rounded-2xl bg-card/70 p-6 text-center text-sm text-muted-foreground">
+                    No saved insights for this tag yet.
+                  </li>
+                )}
+              </ul>
+            </>
+          );
+        })()}
       </section>
+
     </AppShell>
   );
 }
