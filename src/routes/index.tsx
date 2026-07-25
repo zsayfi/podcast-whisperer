@@ -33,6 +33,7 @@ type ScanState =
 function HomePage() {
   const navigate = useNavigate();
   const importFn = useServerFn(importTranscript);
+  const askFn = useServerFn(askLibrary);
 
   const { data: podcasts = [] } = useQuery({
     queryKey: ["podcasts-with-episodes"],
