@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronDown, Play, Clock, Calendar, Sparkles, Bookmark } from "lucide-react";
+import { ChevronDown, Play, Clock, Calendar, Sparkles, Bookmark, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { featuredEpisode, podcasts } from "@/lib/mock-data";
