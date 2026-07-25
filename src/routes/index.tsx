@@ -158,15 +158,15 @@ function HomePage() {
           onSubmit={handleScan}
           className="mt-5 rounded-3xl bg-card p-4 shadow-sm sm:p-5"
         >
-          <div className="flex items-start gap-2 rounded-2xl bg-background/70 px-4 py-2">
-            <FileText className="mt-1 h-4 w-4 shrink-0 text-primary" />
+          <div className="flex items-center gap-2 rounded-full bg-background/70 px-4 py-2">
+            <FileText className="h-4 w-4 shrink-0 text-primary" />
             <textarea
               value={transcript}
               onChange={(e) => setTranscript(e.target.value)}
               placeholder="Paste the full episode transcript here\u2026"
               disabled={scan.kind === "working"}
               rows={1}
-              className="h-10 min-w-0 flex-1 resize-none overflow-y-auto bg-transparent text-sm leading-6 text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
+              className="h-10 min-w-0 flex-1 resize-none overflow-hidden overflow-x-auto whitespace-nowrap bg-transparent py-2.5 text-sm leading-5 text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
             />
           </div>
           <button
