@@ -146,7 +146,7 @@ function HomePage() {
                     {episode.title}
                   </p>
                   <p className="mt-2 text-xs text-card-foreground/80">
-                    <span aria-hidden>\u25CB</span> {episode.duration} \u00B7 {episode.date}
+                    {"\u25CB"} {episode.duration} · {episode.date}
                   </p>
                 </div>
               </Link>
