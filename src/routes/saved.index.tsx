@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronDown, Play, Clock, Calendar, Sparkles, Bookmark, Plus, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { featuredEpisode, podcasts } from "@/lib/mock-data";
+import { featuredEpisode, findEpisode, podcasts, type PodcastCategory } from "@/lib/mock-data";
+import { getLastVisitedEpisodeId } from "@/lib/chat-store";
 import { cn } from "@/lib/utils";
 
 const favouritePodcasts = [podcasts[0], podcasts[1], podcasts[2], podcasts[4]];
@@ -39,24 +40,59 @@ export const Route = createFileRoute("/saved/")({
   component: SavedPage,
 });
 
-const tabs = ["QUESTIONS", "RECIPES", "BOOKS", "MISC"] as const;
-type Tab = (typeof tabs)[number];
+type TabLabel = "QUESTIONS" | "RECIPES" | "BOOKS" | "MISC" | "PRACTICES" | "TOOLS" | "PEOPLE";
+
+const TABS_BY_CATEGORY: Record<PodcastCategory, TabLabel[]> = {
+  HEALTH: ["QUESTIONS", "PRACTICES", "RECIPES", "BOOKS"],
+  FOOD: ["QUESTIONS", "RECIPES", "BOOKS", "MISC"],
+  FEMINISM: ["QUESTIONS", "PRACTICES", "BOOKS", "MISC"],
+  RELATIONSHIPS: ["QUESTIONS", "PRACTICES", "BOOKS", "MISC"],
+  HISTORY: ["QUESTIONS", "PEOPLE", "BOOKS", "MISC"],
+  TECH: ["QUESTIONS", "TOOLS", "BOOKS", "MISC"],
+};
+
+const LABEL_TO_FIELD: Record<TabLabel, "questions" | "recipes" | "books" | "misc"> = {
+  QUESTIONS: "questions",
+  RECIPES: "recipes",
+  BOOKS: "books",
+  MISC: "misc",
+  PRACTICES: "misc",
+  TOOLS: "misc",
+  PEOPLE: "misc",
+};
 
 function SavedPage() {
-  const { podcast, episode } = featuredEpisode();
-  const [tab, setTab] = useState<Tab>("QUESTIONS");
+  const [lastId, setLastId] = useState<string | null>(null);
+  useEffect(() => {
+    setLastId(getLastVisitedEpisodeId());
+  }, []);
+
+  const found = (lastId && findEpisode(lastId)) || featuredEpisode();
+  const { podcast, episode } = found;
+
+  const tabs = TABS_BY_CATEGORY[podcast.category];
+  const [tab, setTab] = useState<TabLabel>(tabs[0]);
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const [activeTag, setActiveTag] = useState<string>("ALL");
   const [customTags, setCustomTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
   const [addingTag, setAddingTag] = useState(false);
 
+  // When the episode (and thus its category) changes, reset to a valid tab
+  useEffect(() => {
+    if (!tabs.includes(tab)) {
+      setTab(tabs[0]);
+      setOpenIndex(0);
+    }
+  }, [tabs, tab]);
+
+  const field = LABEL_TO_FIELD[tab];
   const items =
-    tab === "QUESTIONS"
+    field === "questions"
       ? episode.questions.map((q) => ({ title: q.q, body: q.a }))
-      : tab === "RECIPES"
+      : field === "recipes"
         ? episode.recipes.map((r) => ({ title: r.title, body: r.note }))
-        : tab === "BOOKS"
+        : field === "books"
           ? episode.books.map((b) => ({ title: b.title, body: b.author }))
           : episode.misc.map((m) => ({ title: m.title, body: m.note }));
 
