@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Clock, Calendar, Play, Send, Bookmark } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, Play, Send, Bookmark, Loader2, AlertCircle, ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -32,11 +32,11 @@ export const Route = createFileRoute("/episode/$episodeId")({
   component: EpisodePage,
 });
 
-const suggestions = [
-  "Which books were mentioned?",
-  "Any recipes shared?",
-  "What mindfulness practices were advised?",
+const defaultSuggestions = [
   "Give me a short summary",
+  "Which books were mentioned?",
+  "Any recipes or practices shared?",
+  "What are the key takeaways?",
 ];
 
 function EpisodePage() {
