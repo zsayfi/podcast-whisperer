@@ -149,29 +149,29 @@ function HomePage() {
       </section>
 
       <section>
-        <h2 className="font-serif text-3xl font-bold text-primary sm:text-4xl">Add a podcast</h2>
+        <h2 className="font-serif text-3xl font-bold text-primary sm:text-4xl">Add a transcript</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Paste a link and Lume will transcribe it so you can ask it anything
+          Paste an episode transcript and Lume will analyze it so you can ask it anything
         </p>
 
         <form
           onSubmit={handleScan}
           className="mt-5 rounded-3xl bg-card p-4 shadow-sm sm:p-5"
         >
-          <div className="flex items-center gap-2 rounded-full bg-background/70 px-4 py-2">
-            <Link2 className="h-4 w-4 shrink-0 text-primary" />
-            <input
-              type="url"
-              value={podcastUrl}
-              onChange={(e) => setPodcastUrl(e.target.value)}
-              placeholder="https://example.com/podcast.rss  or  https://cdn.example.com/ep42.mp3"
+          <div className="flex items-start gap-2 rounded-2xl bg-background/70 px-4 py-2">
+            <FileText className="mt-1 h-4 w-4 shrink-0 text-primary" />
+            <textarea
+              value={transcript}
+              onChange={(e) => setTranscript(e.target.value)}
+              placeholder="Paste the full episode transcript here\u2026"
               disabled={scan.kind === "working"}
-              className="min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
+              rows={1}
+              className="h-10 min-w-0 flex-1 resize-none overflow-y-auto bg-transparent text-sm leading-6 text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
             />
           </div>
           <button
             type="submit"
-            disabled={scan.kind === "working" || !podcastUrl.trim()}
+            disabled={scan.kind === "working" || !transcript.trim()}
             className={cn(
               "mt-3 flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold tracking-wide transition-colors",
               "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60",
@@ -182,7 +182,7 @@ function HomePage() {
                 <Loader2 className="h-4 w-4 animate-spin" /> {scan.label}
               </>
             ) : (
-              "Scan podcast"
+              "Analyze transcript"
             )}
           </button>
           {scan.kind === "error" && (
@@ -192,9 +192,8 @@ function HomePage() {
             </div>
           )}
           <p className="mt-3 text-xs text-muted-foreground">
-            Best with a direct .mp3/.m4a link or a podcast RSS feed. Podcast episode
-            pages work when we can find an RSS feed. Spotify episode links are not
-            supported (Spotify doesn't allow third-party audio downloads).
+            Paste at least a few paragraphs of transcript text. Lume will summarize it,
+            extract books, recipes and practices, and open a chat you can ask anything.
           </p>
         </form>
       </section>
