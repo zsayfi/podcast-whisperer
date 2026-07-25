@@ -63,7 +63,7 @@ function SavedPage() {
 
   return (
     <AppShell>
-      <PageHeader title="Favourites" subtitle="Your favourites recap" />
+      <PageHeader title="Saved" subtitle="Your saved recap" />
 
       <section className="mb-6">
         <div className="mb-3 flex items-baseline justify-between">
