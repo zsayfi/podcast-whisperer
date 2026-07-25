@@ -89,7 +89,7 @@ function ShowPage() {
         </div>
       </section>
 
-      <PageHeader title="Episodes" subtitle={`All available episodes of ${podcast.title}`} />
+      <PageHeader title="List of the episodes" subtitle={`All available episodes of ${podcast.title}`} />
 
       <ul className="space-y-3">
         {podcast.episodes.map((episode: Episode) => (
