@@ -196,11 +196,59 @@ export const importTranscript = createServerFn({ method: "POST" })
         : "") ||
       `Transcript ${new Date().toLocaleDateString()}`;
 
-    const podcastId = providedPodcastName
-      ? slugify(providedPodcastName, "podcast")
-      : "pasted-transcripts";
     const podcastTitle = providedPodcastName || "Pasted transcripts";
-    {
+    const normalizedTitle = podcastTitle.trim().replace(/\s+/g, " ");
+    const normalizedKey = normalizedTitle.toLocaleLowerCase();
+
+    let podcastId: string | null = null;
+
+    if (providedPodcastName) {
+      // Forgiving match against existing shows by normalized title.
+      const { data: existingShows } = await sb
+        .from("podcasts")
+        .select("id, title");
+      const match = (existingShows ?? []).find(
+        (r: { id: string; title: string }) =>
+          r.title.trim().replace(/\s+/g, " ").toLocaleLowerCase() ===
+          normalizedKey,
+      );
+      if (match) podcastId = match.id;
+    } else {
+      podcastId = "pasted-transcripts";
+    }
+
+    if (!podcastId) {
+      // Create a new show. Slug may be empty for non-Latin names — fall back
+      // to a stable unique id in that case.
+      const baseSlug = slugify(normalizedTitle, "");
+      let candidate = baseSlug || `podcast-${Date.now().toString(36)}`;
+      // Ensure uniqueness (avoid merging unrelated shows on slug collision).
+      for (let i = 0; i < 5; i++) {
+        const { data: clash } = await sb
+          .from("podcasts")
+          .select("id, title")
+          .eq("id", candidate)
+          .maybeSingle();
+        if (!clash) break;
+        const clashTitle = (clash as { title: string }).title
+          .trim()
+          .replace(/\s+/g, " ")
+          .toLocaleLowerCase();
+        if (clashTitle === normalizedKey) break; // safety: same title, reuse
+        candidate = `${baseSlug || "podcast"}-${Math.random().toString(36).slice(2, 7)}`;
+      }
+      podcastId = candidate;
+
+      const { error } = await sb.from("podcasts").insert({
+        id: podcastId,
+        title: normalizedTitle,
+        host: "",
+        cover_key: "studio",
+        category: analysis.suggestedCategory,
+      });
+      if (error) throw new Error(`Podcast insert failed: ${error.message}`);
+    } else if (!providedPodcastName) {
+      // Ensure the pasted-transcripts bucket exists.
       const { error } = await sb.from("podcasts").upsert(
         {
           id: podcastId,
@@ -213,7 +261,6 @@ export const importTranscript = createServerFn({ method: "POST" })
       );
       if (error) throw new Error(`Podcast upsert failed: ${error.message}`);
     }
-
 
     const episodeId = `${podcastId}-${slugify(derivedTitle, "ep")}-${Date.now().toString(36)}`;
     const nowIso = new Date().toISOString();
@@ -240,6 +287,12 @@ export const importTranscript = createServerFn({ method: "POST" })
       imported_at: nowIso,
     });
     if (error) throw new Error(`Episode insert failed: ${error.message}`);
+
+    // Refresh episode_count on the podcast so Library → Shows is accurate.
+    await sb
+      .from("podcasts")
+      .update({ episode_count: epNumber })
+      .eq("id", podcastId);
 
     return { episodeId };
   });
