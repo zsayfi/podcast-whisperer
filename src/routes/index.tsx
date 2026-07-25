@@ -1,18 +1,20 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Send, Mic, Link2, Loader2, Check } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Send, Mic, Link2, Loader2, Check, AlertCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { listPodcastsWithEpisodes, type PodcastCategory } from "@/lib/data";
+import { importEpisode } from "@/lib/import.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Lume \u2014 Podcast Q&A" },
-      { name: "description", content: "Ask questions about the podcasts you love. Recipes, books, mindfulness practices \u2014 all searchable." },
+      { name: "description", content: "Paste any podcast episode link. Lume transcribes it, then answers your questions about books, recipes, ideas and more." },
       { property: "og:title", content: "Lume \u2014 Podcast Q&A" },
-      { property: "og:description", content: "Ask questions about the podcasts you love. Recipes, books, mindfulness practices \u2014 all searchable." },
+      { property: "og:description", content: "Paste any podcast episode link. Lume transcribes it, then answers your questions about books, recipes, ideas and more." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -22,7 +24,15 @@ export const Route = createFileRoute("/")({
 
 const filters: PodcastCategory[] = ["HEALTH", "TECH", "FOOD", "HISTORY", "FEMINISM", "RELATIONSHIPS"];
 
+type ScanState =
+  | { kind: "idle" }
+  | { kind: "working"; label: string }
+  | { kind: "error"; message: string };
+
 function HomePage() {
+  const navigate = useNavigate();
+  const importFn = useServerFn(importEpisode);
+
   const { data: podcasts = [] } = useQuery({
     queryKey: ["podcasts-with-episodes"],
     queryFn: listPodcastsWithEpisodes,
@@ -48,20 +58,42 @@ function HomePage() {
   const [activeFilter, setActiveFilter] = useState<PodcastCategory>("HEALTH");
   const [prompt, setPrompt] = useState("");
   const [podcastUrl, setPodcastUrl] = useState("");
-  const [scanState, setScanState] = useState<"idle" | "scanning" | "done">("idle");
+  const [scan, setScan] = useState<ScanState>({ kind: "idle" });
 
-  const handleScan = (e: React.FormEvent) => {
+  const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!podcastUrl.trim()) return;
-    setScanState("scanning");
-    setTimeout(() => {
-      setScanState("done");
-      setTimeout(() => {
-        setScanState("idle");
+    const url = podcastUrl.trim();
+    if (!url || scan.kind === "working") return;
+    setScan({ kind: "working", label: "Finding the audio\u2026" });
+    try {
+      // The server function runs resolve -> download -> transcribe -> analyze
+      // as one call. Show a rolling status hint while it works.
+      const labels = [
+        "Finding the audio\u2026",
+        "Downloading episode\u2026",
+        "Transcribing with Whisper\u2026",
+        "Analyzing the transcript\u2026",
+      ];
+      let i = 0;
+      const timer = setInterval(() => {
+        i = Math.min(i + 1, labels.length - 1);
+        setScan({ kind: "working", label: labels[i] });
+      }, 8000);
+      try {
+        const { episodeId } = await importFn({ data: { url } });
+        clearInterval(timer);
         setPodcastUrl("");
-      }, 2000);
-    }, 1800);
+        setScan({ kind: "idle" });
+        navigate({ to: "/episode/$episodeId", params: { episodeId } });
+      } finally {
+        clearInterval(timer);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Something went wrong.";
+      setScan({ kind: "error", message });
+    }
   };
+
 
   return (
     <AppShell>
