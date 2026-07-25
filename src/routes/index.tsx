@@ -67,23 +67,23 @@ function HomePage() {
   const [scan, setScan] = useState<ScanState>({ kind: "idle" });
   const [ask, setAsk] = useState<
     | { kind: "idle" }
-    | { kind: "loading" }
-    | { kind: "answer"; text: string }
-    | { kind: "error"; message: string }
+    | { kind: "loading"; question: string }
+    | { kind: "answer"; question: string; text: string }
+    | { kind: "error"; question: string; message: string }
   >({ kind: "idle" });
 
   const handleAsk = async (e: React.FormEvent) => {
     e.preventDefault();
     const q = prompt.trim();
     if (!q || ask.kind === "loading") return;
-    setAsk({ kind: "loading" });
+    setAsk({ kind: "loading", question: q });
     try {
       const { answer } = await askFn({ data: { question: q } });
-      setAsk({ kind: "answer", text: answer });
+      setAsk({ kind: "answer", question: q, text: answer });
       setPrompt("");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Something went wrong.";
-      setAsk({ kind: "error", message });
+      setAsk({ kind: "error", question: q, message });
     }
   };
 
