@@ -80,7 +80,6 @@ function HomePage() {
     try {
       const { answer } = await askFn({ data: { question: q } });
       setAsk({ kind: "answer", question: q, text: answer });
-      setPrompt("");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Something went wrong.";
       setAsk({ kind: "error", question: q, message });
@@ -194,15 +193,6 @@ function HomePage() {
 
           {ask.kind !== "idle" && (
             <div className="mt-4 space-y-4">
-              <div className="rounded-2xl bg-background/70 p-4">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gold">
-                  Your question
-                </p>
-                <p className="mt-1 text-sm font-semibold text-card-foreground sm:text-base">
-                  {ask.question}
-                </p>
-              </div>
-
               {ask.kind === "loading" && (
                 <div className="flex items-center gap-2 rounded-2xl bg-background/70 p-4 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" /> Searching your library…
