@@ -85,9 +85,9 @@ function LibraryPage() {
         </ul>
       </nav>
 
-      <section aria-labelledby="recently-updated-heading">
-        <h2 id="recently-updated-heading" className="mb-4 font-serif text-2xl font-bold text-primary">
-          Recently Updated
+      <section aria-labelledby="recently-uploaded-heading">
+        <h2 id="recently-uploaded-heading" className="mb-4 font-serif text-2xl font-bold text-primary">
+          Recently Uploaded
         </h2>
         {recentlyUpdated.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
