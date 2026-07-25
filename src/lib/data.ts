@@ -13,6 +13,14 @@ export type PodcastCategory =
   | "FEMINISM"
   | "RELATIONSHIPS";
 
+export type TranscriptStatus =
+  | "pending"
+  | "importing"
+  | "transcribing"
+  | "analyzing"
+  | "ready"
+  | "error";
+
 export type Episode = {
   id: string;
   podcastId: string;
@@ -25,6 +33,11 @@ export type Episode = {
   recipes: { title: string; note: string }[];
   books: { title: string; author: string }[];
   misc: { title: string; note: string }[];
+  sourceUrl: string | null;
+  audioUrl: string | null;
+  transcript: string;
+  transcriptStatus: TranscriptStatus;
+  transcriptError: string | null;
 };
 
 export type Podcast = {
