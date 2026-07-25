@@ -6,6 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { listPodcastsWithEpisodes, type PodcastCategory } from "@/lib/data";
 import { importTranscript } from "@/lib/import.functions";
+import { askLibrary } from "@/lib/library-ask.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -32,6 +33,7 @@ type ScanState =
 function HomePage() {
   const navigate = useNavigate();
   const importFn = useServerFn(importTranscript);
+  const askFn = useServerFn(askLibrary);
 
   const { data: podcasts = [] } = useQuery({
     queryKey: ["podcasts-with-episodes"],
@@ -62,6 +64,27 @@ function HomePage() {
   const [podcastName, setPodcastName] = useState("");
   const [episodeName, setEpisodeName] = useState("");
   const [scan, setScan] = useState<ScanState>({ kind: "idle" });
+  const [ask, setAsk] = useState<
+    | { kind: "idle" }
+    | { kind: "loading" }
+    | { kind: "answer"; text: string }
+    | { kind: "error"; message: string }
+  >({ kind: "idle" });
+
+  const handleAsk = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = prompt.trim();
+    if (!q || ask.kind === "loading") return;
+    setAsk({ kind: "loading" });
+    try {
+      const { answer } = await askFn({ data: { question: q } });
+      setAsk({ kind: "answer", text: answer });
+      setPrompt("");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Something went wrong.";
+      setAsk({ kind: "error", message });
+    }
+  };
 
   const isNewPodcast = selectedPodcastId === "__new__";
 
@@ -145,25 +168,45 @@ function HomePage() {
 
           <form
             className="mt-4 flex items-center gap-2 rounded-full bg-background/70 px-4 py-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setPrompt("");
-            }}
+            onSubmit={handleAsk}
           >
             <input
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="What is Ella's favourite book right now?"
-              className="min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+              disabled={ask.kind === "loading"}
+              className="min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
             />
             <button
               type="submit"
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-primary transition-colors hover:bg-primary/10"
+              disabled={ask.kind === "loading" || !prompt.trim()}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-primary transition-colors hover:bg-primary/10 disabled:opacity-60"
               aria-label="Send"
             >
-              <Send className="h-4 w-4" />
+              {ask.kind === "loading" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </button>
           </form>
+
+          {ask.kind === "loading" && (
+            <div className="mt-4 flex items-center gap-2 rounded-2xl bg-background/70 p-3 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Searching your library…
+            </div>
+          )}
+          {ask.kind === "answer" && (
+            <div className="mt-4 rounded-2xl bg-background/70 p-4 text-sm leading-relaxed text-card-foreground whitespace-pre-wrap">
+              {ask.text}
+            </div>
+          )}
+          {ask.kind === "error" && (
+            <div className="mt-4 flex items-start gap-2 rounded-2xl bg-destructive/10 p-3 text-xs text-destructive">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>{ask.message}</p>
+            </div>
+          )}
         </div>
       </section>
 
