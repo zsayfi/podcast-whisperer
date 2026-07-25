@@ -175,10 +175,13 @@ function HomePage() {
                   </p>
                 </div>
               </Link>
-            </li>
-          ))}
-        </ul>
+                </li>
+              ))}
+            </ul>
+          );
+        })()}
       </section>
+
 
       <section className="mt-10">
         <h2 className="font-serif text-3xl font-bold text-primary sm:text-4xl">Add a podcast</h2>
