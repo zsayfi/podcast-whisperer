@@ -27,11 +27,7 @@ type MenuItem = {
 
 const menu: MenuItem[] = [
   { label: "Shows", icon: Radio, to: "/library" },
-  { label: "Channels", icon: Users, to: "/library" },
   { label: "Categories", icon: LayoutGrid, to: "/library" },
-  { label: "Saved", icon: Bookmark, to: "/saved" },
-  { label: "Downloaded", icon: Download, to: "/library" },
-  { label: "Latest Episodes", icon: Clock, to: "/library" },
 ];
 
 function LibraryPage() {
