@@ -43,6 +43,7 @@ export const podcasts: Podcast[] = [
     host: "Ella Mills",
     cover: wellnessImg,
     episodeCount: 42,
+    category: "HEALTH",
     episodes: [
       {
         id: "ws-42",
