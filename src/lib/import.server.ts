@@ -106,16 +106,16 @@ async function parseRssForEpisode(
   const items = rssText.match(/<item\b[\s\S]*?<\/item>/gi) ?? [];
   if (!items.length) return null;
 
-  let picked: string | null = null;
+  let picked: string | undefined;
   if (matchUrl) {
-    picked =
-      items.find((it) => {
-        const link = tag(it, "link") ?? attr(it, "guid", "isPermaLink");
-        const enc = attr(it, "enclosure", "url");
-        return (link && link.includes(matchUrl)) || (enc && enc === matchUrl);
-      }) ?? null;
+    picked = items.find((it) => {
+      const link = tag(it, "link") ?? attr(it, "guid", "isPermaLink");
+      const enc = attr(it, "enclosure", "url");
+      return (link && link.includes(matchUrl)) || (enc && enc === matchUrl);
+    });
   }
   if (!picked) picked = items[0];
+  if (!picked) return null;
 
   const enclosureUrl = attr(picked, "enclosure", "url");
   if (!enclosureUrl) return null;
