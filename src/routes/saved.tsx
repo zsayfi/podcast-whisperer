@@ -195,32 +195,89 @@ function SavedPage() {
         </p>
 
         {(() => {
-          const tags = ["ALL", ...Array.from(new Set(savedInsights.map((i) => i.tag)))];
+          const baseTags = Array.from(new Set(savedInsights.map((i) => i.tag)));
+          const tags = ["ALL", ...baseTags, ...customTags];
           const filtered =
             activeTag === "ALL"
               ? savedInsights
               : savedInsights.filter((i) => i.tag === activeTag);
+
+          const commitTag = () => {
+            const t = newTag.trim().toUpperCase();
+            if (t && !tags.includes(t)) {
+              setCustomTags((prev) => [...prev, t]);
+              setActiveTag(t);
+            }
+            setNewTag("");
+            setAddingTag(false);
+          };
+
           return (
             <>
-              <div className="mb-4 flex flex-wrap gap-2">
+              <div className="mb-4 flex flex-wrap items-center gap-2">
                 {tags.map((t) => {
                   const active = activeTag === t;
+                  const isCustom = customTags.includes(t);
                   return (
-                    <button
+                    <span
                       key={t}
-                      onClick={() => setActiveTag(t)}
                       className={cn(
-                        "rounded-full px-3 py-1.5 text-[11px] font-bold tracking-wide transition-colors",
+                        "inline-flex items-center rounded-full text-[11px] font-bold tracking-wide transition-colors",
                         active
                           ? "bg-primary text-primary-foreground"
                           : "bg-card text-primary hover:bg-primary/10",
                       )}
                     >
-                      {t}
-                    </button>
+                      <button
+                        onClick={() => setActiveTag(t)}
+                        className="px-3 py-1.5"
+                      >
+                        {t}
+                      </button>
+                      {isCustom && (
+                        <button
+                          onClick={() => {
+                            setCustomTags((prev) => prev.filter((x) => x !== t));
+                            if (activeTag === t) setActiveTag("ALL");
+                          }}
+                          aria-label={`Remove ${t}`}
+                          className="pr-2 opacity-70 hover:opacity-100"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </span>
                   );
                 })}
+                {addingTag ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-card px-2 py-1">
+                    <input
+                      autoFocus
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") commitTag();
+                        if (e.key === "Escape") {
+                          setNewTag("");
+                          setAddingTag(false);
+                        }
+                      }}
+                      onBlur={commitTag}
+                      placeholder="New tag"
+                      maxLength={20}
+                      className="w-24 bg-transparent text-[11px] font-bold uppercase tracking-wide text-primary outline-none placeholder:text-muted-foreground"
+                    />
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => setAddingTag(true)}
+                    className="inline-flex items-center gap-1 rounded-full border border-dashed border-primary/40 px-3 py-1.5 text-[11px] font-bold tracking-wide text-primary hover:bg-primary/10"
+                  >
+                    <Plus className="h-3 w-3" /> NEW
+                  </button>
+                )}
               </div>
+
               <ul className="space-y-3">
                 {filtered.map((insight, i) => (
                   <li key={i} className="rounded-2xl bg-card p-4 shadow-sm">
