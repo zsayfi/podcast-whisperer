@@ -1,10 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ChevronRight, LayoutGrid, Radio, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { listPodcastsWithEpisodes } from "@/lib/data";
 import { cn } from "@/lib/utils";
+
+type LibraryMenuTo = "/library/shows" | "/library/categories";
 
 export const Route = createFileRoute("/library/")({
   head: () => ({
@@ -23,7 +25,7 @@ export const Route = createFileRoute("/library/")({
 type MenuItem = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  to: string;
+  to: LibraryMenuTo;
 };
 
 const menu: MenuItem[] = [
@@ -32,6 +34,7 @@ const menu: MenuItem[] = [
 ];
 
 function LibraryPage() {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const { data: podcasts = [] } = useQuery({
     queryKey: ["podcasts-with-episodes"],
@@ -69,10 +72,11 @@ function LibraryPage() {
             const isLast = index === menu.length - 1;
             return (
               <li key={item.label}>
-                <Link
-                  to={item.to}
+                <button
+                  type="button"
+                  onClick={() => navigate({ to: item.to })}
                   className={cn(
-                    "flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-muted/50",
+                    "flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-muted/50",
                     !isLast && "border-b border-border",
                   )}
                 >
@@ -83,7 +87,7 @@ function LibraryPage() {
                     {item.label}
                   </span>
                   <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                </Link>
+                </button>
               </li>
             );
           })}
