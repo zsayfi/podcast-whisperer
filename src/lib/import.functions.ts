@@ -258,7 +258,7 @@ export const importTranscript = createServerFn({ method: "POST" })
         category: analysis.suggestedCategory,
       });
       if (error) throw new Error(`Podcast insert failed: ${error.message}`);
-    } else if (!providedPodcastName) {
+    } else if (!providedPodcastName && !data.podcastId) {
       // Ensure the pasted-transcripts bucket exists.
       const { error } = await sb.from("podcasts").upsert(
         {
