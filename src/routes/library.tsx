@@ -93,7 +93,7 @@ function LibraryPage() {
         ))}
         {filtered.length === 0 && (
           <li className="col-span-full py-10 text-center text-sm text-muted-foreground">
-            No podcasts match "{query}".
+            No {activeFilter.toLowerCase()} podcasts {query ? `match "${query}"` : "yet"}.
           </li>
         )}
       </ul>
