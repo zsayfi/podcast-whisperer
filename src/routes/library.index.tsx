@@ -72,10 +72,11 @@ function LibraryPage() {
             const isLast = index === menu.length - 1;
             return (
               <li key={item.label}>
-                <Link
-                  to={item.to}
+                <button
+                  type="button"
+                  onClick={() => navigate({ to: item.to })}
                   className={cn(
-                    "flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-muted/50",
+                    "flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-muted/50",
                     !isLast && "border-b border-border",
                   )}
                 >
@@ -86,7 +87,7 @@ function LibraryPage() {
                     {item.label}
                   </span>
                   <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                </Link>
+                </button>
               </li>
             );
           })}
