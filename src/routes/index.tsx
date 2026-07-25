@@ -1,11 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Send, Mic, Link2, Loader2, AlertCircle } from "lucide-react";
+import { Send, Mic, FileText, Loader2, AlertCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { listPodcastsWithEpisodes, type PodcastCategory } from "@/lib/data";
-import { importEpisode } from "@/lib/import.functions";
+import { importTranscript } from "@/lib/import.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
