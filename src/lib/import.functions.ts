@@ -9,7 +9,10 @@ const Input = z.object({
 const TranscriptInput = z.object({
   transcript: z.string().min(50).max(500_000),
   title: z.string().max(300).optional(),
+  podcastName: z.string().max(200).optional(),
+  episodeName: z.string().max(300).optional(),
 });
+
 
 function serverSupabase() {
   const url = process.env.SUPABASE_URL;
@@ -176,7 +179,8 @@ export const importTranscript = createServerFn({ method: "POST" })
     const sb = serverSupabase();
 
     const transcript = data.transcript.trim();
-    const providedTitle = data.title?.trim();
+    const providedTitle = (data.episodeName ?? data.title)?.trim();
+    const providedPodcastName = data.podcastName?.trim();
 
     // Analyze first so we can derive a useful title/category.
     const analysis = await analyzeTranscript(
@@ -192,12 +196,15 @@ export const importTranscript = createServerFn({ method: "POST" })
         : "") ||
       `Transcript ${new Date().toLocaleDateString()}`;
 
-    const podcastId = "pasted-transcripts";
+    const podcastId = providedPodcastName
+      ? slugify(providedPodcastName, "podcast")
+      : "pasted-transcripts";
+    const podcastTitle = providedPodcastName || "Pasted transcripts";
     {
       const { error } = await sb.from("podcasts").upsert(
         {
           id: podcastId,
-          title: "Pasted transcripts",
+          title: podcastTitle,
           host: "",
           cover_key: "studio",
           category: analysis.suggestedCategory,
@@ -206,6 +213,7 @@ export const importTranscript = createServerFn({ method: "POST" })
       );
       if (error) throw new Error(`Podcast upsert failed: ${error.message}`);
     }
+
 
     const episodeId = `${podcastId}-${slugify(derivedTitle, "ep")}-${Date.now().toString(36)}`;
     const nowIso = new Date().toISOString();
