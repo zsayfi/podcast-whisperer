@@ -182,38 +182,41 @@ function HomePage() {
               type="url"
               value={podcastUrl}
               onChange={(e) => setPodcastUrl(e.target.value)}
-              placeholder="https://open.spotify.com/episode/..."
-              disabled={scanState === "scanning"}
+              placeholder="https://example.com/podcast.rss  or  https://cdn.example.com/ep42.mp3"
+              disabled={scan.kind === "working"}
               className="min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
             />
           </div>
           <button
             type="submit"
-            disabled={scanState !== "idle" || !podcastUrl.trim()}
+            disabled={scan.kind === "working" || !podcastUrl.trim()}
             className={cn(
               "mt-3 flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold tracking-wide transition-colors",
-              scanState === "done"
-                ? "bg-gold text-gold-foreground"
-                : "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60",
+              "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60",
             )}
           >
-            {scanState === "scanning" && (
+            {scan.kind === "working" ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Scanning episode…
+                <Loader2 className="h-4 w-4 animate-spin" /> {scan.label}
               </>
+            ) : (
+              "Scan podcast"
             )}
-            {scanState === "done" && (
-              <>
-                <Check className="h-4 w-4" /> Ready to chat
-              </>
-            )}
-            {scanState === "idle" && "Scan podcast"}
           </button>
+          {scan.kind === "error" && (
+            <div className="mt-3 flex items-start gap-2 rounded-2xl bg-destructive/10 p-3 text-xs text-destructive">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>{scan.message}</p>
+            </div>
+          )}
           <p className="mt-3 text-xs text-muted-foreground">
-            Works with Spotify, Apple Podcasts, YouTube and direct RSS links.
+            Best with a direct .mp3/.m4a link or a podcast RSS feed. Podcast episode
+            pages work when we can find an RSS feed. Spotify episode links are not
+            supported (Spotify doesn't allow third-party audio downloads).
           </p>
         </form>
       </section>
+
 
       <section className="mt-10">
         <h2 className="font-serif text-3xl font-bold text-primary sm:text-4xl">New episodes</h2>
