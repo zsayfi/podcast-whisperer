@@ -177,6 +177,7 @@ export const podcasts: Podcast[] = [
     host: "Iris Lang",
     cover: kitchenImg,
     episodeCount: 22,
+    category: "FOOD",
     episodes: [
       {
         id: "kn-22",
