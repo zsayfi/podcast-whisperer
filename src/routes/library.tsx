@@ -2,7 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { useState } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { podcasts } from "@/lib/mock-data";
+import { podcasts, type PodcastCategory } from "@/lib/mock-data";
+import { cn } from "@/lib/utils";
+
+const filters: PodcastCategory[] = ["HEALTH", "TECH", "FOOD", "HISTORY", "FEMINISM", "RELATIONSHIPS"];
 
 export const Route = createFileRoute("/library")({
   head: () => ({
@@ -20,17 +23,19 @@ export const Route = createFileRoute("/library")({
 
 function LibraryPage() {
   const [query, setQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState<PodcastCategory>("HEALTH");
   const filtered = podcasts.filter(
     (p) =>
-      p.title.toLowerCase().includes(query.toLowerCase()) ||
-      p.host.toLowerCase().includes(query.toLowerCase()),
+      p.category === activeFilter &&
+      (p.title.toLowerCase().includes(query.toLowerCase()) ||
+        p.host.toLowerCase().includes(query.toLowerCase())),
   );
 
   return (
     <AppShell>
       <PageHeader title="Library" subtitle="Browse through podcasts" />
 
-      <label className="mb-6 flex items-center gap-3 rounded-2xl bg-card px-4 py-3 shadow-sm">
+      <label className="mb-4 flex items-center gap-3 rounded-2xl bg-card px-4 py-3 shadow-sm">
         <Search className="h-4 w-4 text-primary" />
         <input
           value={query}
@@ -39,6 +44,26 @@ function LibraryPage() {
           className="min-w-0 flex-1 bg-transparent text-sm text-primary placeholder:text-primary/60 focus:outline-none"
         />
       </label>
+
+      <div className="mb-5 flex flex-wrap gap-2">
+        {filters.map((f) => {
+          const active = activeFilter === f;
+          return (
+            <button
+              key={f}
+              onClick={() => setActiveFilter(f)}
+              className={cn(
+                "rounded-full px-4 py-2 text-xs font-bold tracking-wide transition-colors",
+                active
+                  ? "bg-gold text-gold-foreground"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90",
+              )}
+            >
+              {f}
+            </button>
+          );
+        })}
+      </div>
 
       <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         {filtered.map((p) => (
@@ -68,7 +93,7 @@ function LibraryPage() {
         ))}
         {filtered.length === 0 && (
           <li className="col-span-full py-10 text-center text-sm text-muted-foreground">
-            No podcasts match "{query}".
+            No {activeFilter.toLowerCase()} podcasts {query ? `match "${query}"` : "yet"}.
           </li>
         )}
       </ul>
