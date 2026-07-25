@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Send, Mic } from "lucide-react";
+import { Send, Mic, Link2, Loader2, Check } from "lucide-react";
 import { useState } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { recentEpisodes, newEpisodes } from "@/lib/mock-data";
