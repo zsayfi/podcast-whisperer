@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Send, Mic, Link2, Loader2, Check } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { recentEpisodes, newEpisodes } from "@/lib/mock-data";
+import { listPodcastsWithEpisodes, type PodcastCategory } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -19,12 +20,32 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-const filters = ["HEALTH", "TECH", "FOOD", "HISTORY", "FEMINISM", "RELATIONSHIPS"] as const;
+const filters: PodcastCategory[] = ["HEALTH", "TECH", "FOOD", "HISTORY", "FEMINISM", "RELATIONSHIPS"];
 
 function HomePage() {
-  const recent = recentEpisodes();
-  const fresh = newEpisodes();
-  const [activeFilter, setActiveFilter] = useState<(typeof filters)[number]>("HEALTH");
+  const { data: podcasts = [] } = useQuery({
+    queryKey: ["podcasts-with-episodes"],
+    queryFn: listPodcastsWithEpisodes,
+  });
+
+  const recent = useMemo(
+    () =>
+      podcasts
+        .filter((p) => p.episodes.length > 0)
+        .slice(0, 3)
+        .map((p) => ({ podcast: p, episode: p.episodes[0] })),
+    [podcasts],
+  );
+
+  const fresh = useMemo(
+    () =>
+      podcasts
+        .filter((p) => p.episodes.length > 0)
+        .map((p) => ({ podcast: p, episode: p.episodes[0] })),
+    [podcasts],
+  );
+
+  const [activeFilter, setActiveFilter] = useState<PodcastCategory>("HEALTH");
   const [prompt, setPrompt] = useState("");
   const [podcastUrl, setPodcastUrl] = useState("");
   const [scanState, setScanState] = useState<"idle" | "scanning" | "done">("idle");
@@ -191,7 +212,7 @@ function HomePage() {
           if (filtered.length === 0) {
             return (
               <p className="mt-6 rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground">
-                No {activeFilter.toLowerCase()} episodes yet. Add a podcast below to get started.
+                No {activeFilter.toLowerCase()} episodes yet. Add a podcast above to get started.
               </p>
             );
           }
