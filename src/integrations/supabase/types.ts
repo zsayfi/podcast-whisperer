@@ -71,49 +71,70 @@ export type Database = {
       }
       episodes: {
         Row: {
+          audio_url: string | null
           books: Json
           created_at: string
           date_label: string
           duration: string
           ep_number: number
           id: string
+          imported_at: string | null
           misc: Json
           podcast_id: string
           questions: Json
           recipes: Json
           sort_order: number
+          source_url: string | null
           summary: string
           title: string
+          transcript: string
+          transcript_error: string | null
+          transcript_status: string
+          updated_at: string
         }
         Insert: {
+          audio_url?: string | null
           books?: Json
           created_at?: string
           date_label: string
           duration: string
           ep_number: number
           id: string
+          imported_at?: string | null
           misc?: Json
           podcast_id: string
           questions?: Json
           recipes?: Json
           sort_order?: number
+          source_url?: string | null
           summary?: string
           title: string
+          transcript?: string
+          transcript_error?: string | null
+          transcript_status?: string
+          updated_at?: string
         }
         Update: {
+          audio_url?: string | null
           books?: Json
           created_at?: string
           date_label?: string
           duration?: string
           ep_number?: number
           id?: string
+          imported_at?: string | null
           misc?: Json
           podcast_id?: string
           questions?: Json
           recipes?: Json
           sort_order?: number
+          source_url?: string | null
           summary?: string
           title?: string
+          transcript?: string
+          transcript_error?: string | null
+          transcript_status?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -156,8 +177,11 @@ export type Database = {
           episode_count: number
           host: string
           id: string
+          rss_url: string | null
           sort_order: number
           title: string
+          updated_at: string
+          website_url: string | null
         }
         Insert: {
           category: string
@@ -166,8 +190,11 @@ export type Database = {
           episode_count?: number
           host: string
           id: string
+          rss_url?: string | null
           sort_order?: number
           title: string
+          updated_at?: string
+          website_url?: string | null
         }
         Update: {
           category?: string
@@ -176,8 +203,11 @@ export type Database = {
           episode_count?: number
           host?: string
           id?: string
+          rss_url?: string | null
           sort_order?: number
           title?: string
+          updated_at?: string
+          website_url?: string | null
         }
         Relationships: []
       }
