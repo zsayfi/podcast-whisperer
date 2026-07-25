@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, Clock, Calendar, Play, Send } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, Play, Send, Bookmark } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { AppShell } from "@/components/app-shell";
@@ -8,9 +8,13 @@ import {
   loadMessages,
   saveMessages,
   mockAnswer,
+  loadSavedInsights,
+  saveInsight,
+  removeSavedInsight,
   type ChatMessage,
 } from "@/lib/chat-store";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/episode/$episodeId")({
   loader: ({ params }) => {
