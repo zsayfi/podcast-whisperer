@@ -92,7 +92,7 @@ function ShowPage() {
       <PageHeader title="Episodes" subtitle={`All available episodes of ${podcast.title}`} />
 
       <ul className="space-y-3">
-        {podcast.episodes.map((episode) => (
+        {podcast.episodes.map((episode: Episode) => (
           <li key={episode.id}>
             <Link
               to="/episode/$episodeId"
