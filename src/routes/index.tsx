@@ -6,6 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { listPodcastsWithEpisodes, type PodcastCategory } from "@/lib/data";
 import { importTranscript } from "@/lib/import.functions";
+import { askLibrary } from "@/lib/library-ask.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
