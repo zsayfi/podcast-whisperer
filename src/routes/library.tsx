@@ -2,7 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { useState } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { podcasts } from "@/lib/mock-data";
+import { podcasts, type PodcastCategory } from "@/lib/mock-data";
+import { cn } from "@/lib/utils";
+
+const filters: PodcastCategory[] = ["HEALTH", "TECH", "FOOD", "HISTORY", "FEMINISM", "RELATIONSHIPS"];
 
 export const Route = createFileRoute("/library")({
   head: () => ({
