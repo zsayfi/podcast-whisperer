@@ -60,6 +60,39 @@ function SavedPage() {
     <AppShell>
       <PageHeader title="Favourites" subtitle="Your favourites recap" />
 
+      <section className="mb-6">
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="font-serif text-lg font-bold text-primary">Favourite podcasts</h2>
+          <span className="text-xs text-muted-foreground">{favouritePodcasts.length} saved</span>
+        </div>
+        <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2">
+          {favouritePodcasts.map((p) => (
+            <Link
+              key={p.id}
+              to="/episode/$episodeId"
+              params={{ episodeId: p.episodes[0].id }}
+              className="w-32 shrink-0 snap-start"
+            >
+              <div className="overflow-hidden rounded-2xl shadow-sm">
+                <img
+                  src={p.cover}
+                  alt={p.title}
+                  loading="lazy"
+                  width={400}
+                  height={400}
+                  className="aspect-square w-full object-cover"
+                />
+              </div>
+              <p className="mt-2 line-clamp-2 text-xs font-semibold text-primary">{p.title}</p>
+              <p className="text-[10px] text-muted-foreground">{p.episodeCount} episodes</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <h2 className="mb-3 font-serif text-lg font-bold text-primary">Featured episode</h2>
+
+
       <Link
         to="/episode/$episodeId"
         params={{ episodeId: episode.id }}
