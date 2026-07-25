@@ -129,6 +129,7 @@ export const podcasts: Podcast[] = [
     host: "Dr. Cate Shanahan",
     cover: nutritionImg,
     episodeCount: 31,
+    category: "FOOD",
     episodes: [
       {
         id: "dn-31",
