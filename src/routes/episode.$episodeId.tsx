@@ -47,6 +47,12 @@ function EpisodePage() {
   const { data: episodeData, isLoading } = useQuery({
     queryKey: ["episode", episodeId],
     queryFn: () => getEpisode(episodeId),
+    refetchInterval: (q) => {
+      const status = q.state.data?.episode.transcriptStatus;
+      return status === "transcribing" || status === "analyzing" || status === "importing"
+        ? 3000
+        : false;
+    },
   });
 
   const { data: dbMessages = [] } = useQuery({
