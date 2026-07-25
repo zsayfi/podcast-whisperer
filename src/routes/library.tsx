@@ -1,14 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  Bookmark,
-  ChevronRight,
-  Clock,
-  Download,
-  LayoutGrid,
-  Radio,
-  Search,
-  Users,
-} from "lucide-react";
+import { ChevronRight, LayoutGrid, Radio, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { podcasts } from "@/lib/mock-data";
@@ -36,11 +27,7 @@ type MenuItem = {
 
 const menu: MenuItem[] = [
   { label: "Shows", icon: Radio, to: "/library" },
-  { label: "Channels", icon: Users, to: "/library" },
   { label: "Categories", icon: LayoutGrid, to: "/library" },
-  { label: "Saved", icon: Bookmark, to: "/saved" },
-  { label: "Downloaded", icon: Download, to: "/library" },
-  { label: "Latest Episodes", icon: Clock, to: "/library" },
 ];
 
 function LibraryPage() {
