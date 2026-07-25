@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Clock, Calendar, Play, Send, Bookmark } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, Play, Send, Bookmark, Loader2, AlertCircle, ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -32,11 +32,11 @@ export const Route = createFileRoute("/episode/$episodeId")({
   component: EpisodePage,
 });
 
-const suggestions = [
-  "Which books were mentioned?",
-  "Any recipes shared?",
-  "What mindfulness practices were advised?",
+const defaultSuggestions = [
   "Give me a short summary",
+  "Which books were mentioned?",
+  "Any recipes or practices shared?",
+  "What are the key takeaways?",
 ];
 
 function EpisodePage() {
@@ -47,6 +47,12 @@ function EpisodePage() {
   const { data: episodeData, isLoading } = useQuery({
     queryKey: ["episode", episodeId],
     queryFn: () => getEpisode(episodeId),
+    refetchInterval: (q) => {
+      const status = q.state.data?.episode.transcriptStatus;
+      return status === "transcribing" || status === "analyzing" || status === "importing"
+        ? 3000
+        : false;
+    },
   });
 
   const { data: dbMessages = [] } = useQuery({
@@ -220,6 +226,37 @@ function EpisodePage() {
           </div>
         </section>
 
+        <TranscriptStatusPanel
+          status={episode.transcriptStatus}
+          error={episode.transcriptError}
+        />
+
+        {episode.transcriptStatus === "ready" && episode.summary && (
+          <section className="mb-4 rounded-3xl bg-card p-4 shadow-sm sm:p-5">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-gold">Summary</p>
+            <p className="mt-2 text-sm leading-relaxed text-card-foreground sm:text-base">
+              {episode.summary}
+            </p>
+          </section>
+        )}
+
+        {episode.transcriptStatus === "ready" && episode.transcript && (
+          <details className="mb-4 rounded-3xl bg-card p-4 shadow-sm sm:p-5">
+            <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-primary">
+              <span className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gold">Transcript</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  {Math.round(episode.transcript.length / 1000)}k chars
+                </span>
+              </span>
+              <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+            </summary>
+            <p className="mt-3 max-h-80 overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed text-card-foreground/90">
+              {episode.transcript}
+            </p>
+          </details>
+        )}
+
         <div
           ref={scrollerRef}
           className="flex-1 space-y-4 overflow-y-auto rounded-3xl bg-card/40 p-4 sm:p-5"
@@ -246,16 +283,21 @@ function EpisodePage() {
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2">
-          {suggestions.map((s) => (
+          {(episode.questions.length > 0
+            ? episode.questions.map((q) => q.q)
+            : defaultSuggestions
+          ).map((s) => (
             <button
               key={s}
               onClick={() => send(s)}
-              className="rounded-full bg-card px-3 py-1.5 text-xs font-medium text-primary shadow-sm transition-colors hover:bg-primary hover:text-primary-foreground"
+              disabled={episode.transcriptStatus !== "ready"}
+              className="rounded-full bg-card px-3 py-1.5 text-xs font-medium text-primary shadow-sm transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
             >
               {s}
             </button>
           ))}
         </div>
+
 
         <form
           className="mt-3 flex items-end gap-2 rounded-3xl bg-card p-2 shadow-sm"
@@ -275,15 +317,20 @@ function EpisodePage() {
               }
             }}
             rows={1}
-            placeholder="Ask about this episode..."
-            className="min-h-10 flex-1 resize-none bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+            disabled={episode.transcriptStatus !== "ready"}
+            placeholder={
+              episode.transcriptStatus === "ready"
+                ? "Ask about this episode..."
+                : "Chat unlocks once transcription finishes\u2026"
+            }
+            className="min-h-10 flex-1 resize-none bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
           />
           <button
             type="submit"
-            disabled={!input.trim() || thinking}
+            disabled={!input.trim() || thinking || episode.transcriptStatus !== "ready"}
             className={cn(
               "grid h-10 w-10 shrink-0 place-items-center rounded-full transition-colors",
-              input.trim() && !thinking
+              input.trim() && !thinking && episode.transcriptStatus === "ready"
                 ? "bg-primary text-primary-foreground hover:bg-primary/90"
                 : "bg-muted text-muted-foreground",
             )}
@@ -296,6 +343,48 @@ function EpisodePage() {
     </div>
   );
 }
+
+function TranscriptStatusPanel({
+  status,
+  error,
+}: {
+  status: import("@/lib/data").TranscriptStatus;
+  error: string | null;
+}) {
+  if (status === "ready") return null;
+  if (status === "error") {
+    return (
+      <div className="mb-4 flex items-start gap-3 rounded-3xl bg-destructive/10 p-4 text-destructive shadow-sm sm:p-5">
+        <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">Transcription failed</p>
+          <p className="mt-1 text-xs opacity-90">
+            {error ?? "Something went wrong while processing this episode."}
+          </p>
+        </div>
+      </div>
+    );
+  }
+  const label =
+    status === "transcribing"
+      ? "Transcribing audio with Whisper\u2026"
+      : status === "analyzing"
+        ? "Analyzing the transcript\u2026"
+        : "Importing episode\u2026";
+  return (
+    <div className="mb-4 flex items-start gap-3 rounded-3xl bg-card p-4 shadow-sm sm:p-5">
+      <Loader2 className="mt-0.5 h-5 w-5 shrink-0 animate-spin text-primary" />
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-primary">{label}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          This can take up to a minute. You can leave this page open \u2014 the summary,
+          questions and chat unlock as soon as it's done.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 
 function MessageBubble({
   message,

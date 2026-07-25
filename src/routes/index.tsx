@@ -1,18 +1,20 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Send, Mic, Link2, Loader2, Check } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Send, Mic, Link2, Loader2, AlertCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { listPodcastsWithEpisodes, type PodcastCategory } from "@/lib/data";
+import { importEpisode } from "@/lib/import.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Lume \u2014 Podcast Q&A" },
-      { name: "description", content: "Ask questions about the podcasts you love. Recipes, books, mindfulness practices \u2014 all searchable." },
+      { name: "description", content: "Paste any podcast episode link. Lume transcribes it, then answers your questions about books, recipes, ideas and more." },
       { property: "og:title", content: "Lume \u2014 Podcast Q&A" },
-      { property: "og:description", content: "Ask questions about the podcasts you love. Recipes, books, mindfulness practices \u2014 all searchable." },
+      { property: "og:description", content: "Paste any podcast episode link. Lume transcribes it, then answers your questions about books, recipes, ideas and more." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -22,7 +24,15 @@ export const Route = createFileRoute("/")({
 
 const filters: PodcastCategory[] = ["HEALTH", "TECH", "FOOD", "HISTORY", "FEMINISM", "RELATIONSHIPS"];
 
+type ScanState =
+  | { kind: "idle" }
+  | { kind: "working"; label: string }
+  | { kind: "error"; message: string };
+
 function HomePage() {
+  const navigate = useNavigate();
+  const importFn = useServerFn(importEpisode);
+
   const { data: podcasts = [] } = useQuery({
     queryKey: ["podcasts-with-episodes"],
     queryFn: listPodcastsWithEpisodes,
@@ -48,20 +58,42 @@ function HomePage() {
   const [activeFilter, setActiveFilter] = useState<PodcastCategory>("HEALTH");
   const [prompt, setPrompt] = useState("");
   const [podcastUrl, setPodcastUrl] = useState("");
-  const [scanState, setScanState] = useState<"idle" | "scanning" | "done">("idle");
+  const [scan, setScan] = useState<ScanState>({ kind: "idle" });
 
-  const handleScan = (e: React.FormEvent) => {
+  const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!podcastUrl.trim()) return;
-    setScanState("scanning");
-    setTimeout(() => {
-      setScanState("done");
-      setTimeout(() => {
-        setScanState("idle");
+    const url = podcastUrl.trim();
+    if (!url || scan.kind === "working") return;
+    setScan({ kind: "working", label: "Finding the audio\u2026" });
+    try {
+      // The server function runs resolve -> download -> transcribe -> analyze
+      // as one call. Show a rolling status hint while it works.
+      const labels = [
+        "Finding the audio\u2026",
+        "Downloading episode\u2026",
+        "Transcribing with Whisper\u2026",
+        "Analyzing the transcript\u2026",
+      ];
+      let i = 0;
+      const timer = setInterval(() => {
+        i = Math.min(i + 1, labels.length - 1);
+        setScan({ kind: "working", label: labels[i] });
+      }, 8000);
+      try {
+        const { episodeId } = await importFn({ data: { url } });
+        clearInterval(timer);
         setPodcastUrl("");
-      }, 2000);
-    }, 1800);
+        setScan({ kind: "idle" });
+        navigate({ to: "/episode/$episodeId", params: { episodeId } });
+      } finally {
+        clearInterval(timer);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Something went wrong.";
+      setScan({ kind: "error", message });
+    }
   };
+
 
   return (
     <AppShell>
@@ -150,38 +182,41 @@ function HomePage() {
               type="url"
               value={podcastUrl}
               onChange={(e) => setPodcastUrl(e.target.value)}
-              placeholder="https://open.spotify.com/episode/..."
-              disabled={scanState === "scanning"}
+              placeholder="https://example.com/podcast.rss  or  https://cdn.example.com/ep42.mp3"
+              disabled={scan.kind === "working"}
               className="min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
             />
           </div>
           <button
             type="submit"
-            disabled={scanState !== "idle" || !podcastUrl.trim()}
+            disabled={scan.kind === "working" || !podcastUrl.trim()}
             className={cn(
               "mt-3 flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold tracking-wide transition-colors",
-              scanState === "done"
-                ? "bg-gold text-gold-foreground"
-                : "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60",
+              "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60",
             )}
           >
-            {scanState === "scanning" && (
+            {scan.kind === "working" ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Scanning episode…
+                <Loader2 className="h-4 w-4 animate-spin" /> {scan.label}
               </>
+            ) : (
+              "Scan podcast"
             )}
-            {scanState === "done" && (
-              <>
-                <Check className="h-4 w-4" /> Ready to chat
-              </>
-            )}
-            {scanState === "idle" && "Scan podcast"}
           </button>
+          {scan.kind === "error" && (
+            <div className="mt-3 flex items-start gap-2 rounded-2xl bg-destructive/10 p-3 text-xs text-destructive">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>{scan.message}</p>
+            </div>
+          )}
           <p className="mt-3 text-xs text-muted-foreground">
-            Works with Spotify, Apple Podcasts, YouTube and direct RSS links.
+            Best with a direct .mp3/.m4a link or a podcast RSS feed. Podcast episode
+            pages work when we can find an RSS feed. Spotify episode links are not
+            supported (Spotify doesn't allow third-party audio downloads).
           </p>
         </form>
       </section>
+
 
       <section className="mt-10">
         <h2 className="font-serif text-3xl font-bold text-primary sm:text-4xl">New episodes</h2>

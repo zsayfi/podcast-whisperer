@@ -60,24 +60,36 @@ export const askEpisode = createServerFn({ method: "POST" })
     const recipes = (e.recipes ?? []) as Titled[];
     const misc = (e.misc ?? []) as Titled[];
 
-    const context = [
+    const transcript = typeof e.transcript === "string" ? e.transcript : "";
+    const hasTranscript = transcript.trim().length > 200;
+
+    const contextLines = [
       `Podcast: ${podcast.title} — host ${podcast.host}`,
       `Episode ${e.ep_number}: ${e.title} (${e.duration}, ${e.date_label})`,
       ``,
-      `Summary: ${e.summary}`,
-      ``,
-      `Key Q&A from the transcript:`,
-      ...questions.map((q) => `- Q: ${q.q}\n  A: ${q.a}`),
-      ``,
-      `Books mentioned:`,
-      ...(books.length ? books.map((b) => `- ${b.title} — ${b.author}`) : ["- (none)"]),
-      ``,
-      `Recipes shared:`,
-      ...(recipes.length ? recipes.map((r) => `- ${r.title}: ${r.note}`) : ["- (none)"]),
-      ``,
-      `Other notes:`,
-      ...(misc.length ? misc.map((m) => `- ${m.title}: ${m.note}`) : ["- (none)"]),
-    ].join("\n");
+      `Summary: ${e.summary || "(not yet available)"}`,
+    ];
+    if (hasTranscript) {
+      const cap = 100_000;
+      const t = transcript.length > cap ? transcript.slice(0, cap) + "\n…[truncated]" : transcript;
+      contextLines.push("", "Full transcript:", t);
+    } else {
+      contextLines.push(
+        ``,
+        `Key Q&A from the transcript:`,
+        ...(questions.length ? questions.map((q) => `- Q: ${q.q}\n  A: ${q.a}`) : ["- (none)"]),
+        ``,
+        `Books mentioned:`,
+        ...(books.length ? books.map((b) => `- ${b.title} — ${b.author}`) : ["- (none)"]),
+        ``,
+        `Recipes / practices shared:`,
+        ...(recipes.length ? recipes.map((r) => `- ${r.title}: ${r.note}`) : ["- (none)"]),
+        ``,
+        `Other notes:`,
+        ...(misc.length ? misc.map((m) => `- ${m.title}: ${m.note}`) : ["- (none)"]),
+      );
+    }
+    const context = contextLines.join("\n");
 
     const system = `You are Lume, a friendly AI assistant that answers questions about a specific podcast episode the user is listening to. Only use the episode context below to answer. If a detail is not in the context, say so briefly and suggest what related info is available. Keep answers concise, warm, and formatted in short markdown (bold titles, bullet lists when listing recipes/books/practices).\n\nEPISODE CONTEXT:\n${context}`;
 
