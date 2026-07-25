@@ -28,6 +28,19 @@ export function clearMessages(episodeId: string) {
   window.localStorage.removeItem(key(episodeId));
 }
 
+// Track the most recently opened episode
+const LAST_VISITED_KEY = "lume:last-visited-episode";
+
+export function recordEpisodeVisit(episodeId: string) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(LAST_VISITED_KEY, episodeId);
+}
+
+export function getLastVisitedEpisodeId(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(LAST_VISITED_KEY);
+}
+
 // Saved insights from AI chat
 export type SavedInsight = {
   id: string;

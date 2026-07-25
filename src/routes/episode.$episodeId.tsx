@@ -11,6 +11,7 @@ import {
   loadSavedInsights,
   saveInsight,
   removeSavedInsight,
+  recordEpisodeVisit,
   type ChatMessage,
 } from "@/lib/chat-store";
 import { cn } from "@/lib/utils";
@@ -92,6 +93,7 @@ function EpisodePage() {
     const saved = loadMessages(episode.id);
     setMessages(saved.length ? saved : initial);
     setSavedIds(new Set(loadSavedInsights().map((i) => i.id)));
+    recordEpisodeVisit(episode.id);
   }, [episode.id, initial]);
 
   useEffect(() => {
