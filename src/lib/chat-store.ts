@@ -28,6 +28,48 @@ export function clearMessages(episodeId: string) {
   window.localStorage.removeItem(key(episodeId));
 }
 
+// Saved insights from AI chat
+export type SavedInsight = {
+  id: string;
+  episodeId: string;
+  episodeTitle: string;
+  podcastTitle: string;
+  question: string;
+  answer: string;
+  savedAt: number;
+};
+
+const SAVED_KEY = "lume:saved-insights";
+
+export function loadSavedInsights(): SavedInsight[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(SAVED_KEY);
+    return raw ? (JSON.parse(raw) as SavedInsight[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveInsight(insight: SavedInsight) {
+  if (typeof window === "undefined") return;
+  const all = loadSavedInsights();
+  if (all.some((i) => i.id === insight.id)) return;
+  window.localStorage.setItem(SAVED_KEY, JSON.stringify([insight, ...all]));
+}
+
+export function removeSavedInsight(id: string) {
+  if (typeof window === "undefined") return;
+  const all = loadSavedInsights().filter((i) => i.id !== id);
+  window.localStorage.setItem(SAVED_KEY, JSON.stringify(all));
+}
+
+export function isInsightSaved(id: string): boolean {
+  return loadSavedInsights().some((i) => i.id === id);
+}
+
+
+
 // Mock AI answer using episode data
 import type { Episode } from "./mock-data";
 

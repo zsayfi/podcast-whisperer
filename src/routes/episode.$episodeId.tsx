@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, Clock, Calendar, Play, Send } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, Play, Send, Bookmark } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { AppShell } from "@/components/app-shell";
@@ -8,9 +8,13 @@ import {
   loadMessages,
   saveMessages,
   mockAnswer,
+  loadSavedInsights,
+  saveInsight,
+  removeSavedInsight,
   type ChatMessage,
 } from "@/lib/chat-store";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/episode/$episodeId")({
   loader: ({ params }) => {
@@ -79,6 +83,7 @@ function EpisodePage() {
   const [messages, setMessages] = useState<ChatMessage[]>(initial);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const scrollerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -86,6 +91,7 @@ function EpisodePage() {
   useEffect(() => {
     const saved = loadMessages(episode.id);
     setMessages(saved.length ? saved : initial);
+    setSavedIds(new Set(loadSavedInsights().map((i) => i.id)));
   }, [episode.id, initial]);
 
   useEffect(() => {
@@ -99,6 +105,30 @@ function EpisodePage() {
   useEffect(() => {
     inputRef.current?.focus();
   }, [episode.id]);
+
+  const toggleSave = (assistantMsg: ChatMessage) => {
+    if (assistantMsg.id === "seed") return;
+    const idx = messages.findIndex((m) => m.id === assistantMsg.id);
+    const prevUser = [...messages.slice(0, idx)].reverse().find((m) => m.role === "user");
+    const question = prevUser?.content ?? "Chat insight";
+    const next = new Set(savedIds);
+    if (savedIds.has(assistantMsg.id)) {
+      removeSavedInsight(assistantMsg.id);
+      next.delete(assistantMsg.id);
+    } else {
+      saveInsight({
+        id: assistantMsg.id,
+        episodeId: episode.id,
+        episodeTitle: episode.title,
+        podcastTitle: podcast.title,
+        question,
+        answer: assistantMsg.content,
+        savedAt: Date.now(),
+      });
+      next.add(assistantMsg.id);
+    }
+    setSavedIds(next);
+  };
 
   const send = (raw: string) => {
     const text = raw.trim();
@@ -172,7 +202,13 @@ function EpisodePage() {
           className="flex-1 space-y-4 overflow-y-auto rounded-3xl bg-card/40 p-4 sm:p-5"
         >
           {messages.map((m) => (
-            <MessageBubble key={m.id} message={m} />
+            <MessageBubble
+              key={m.id}
+              message={m}
+              saved={savedIds.has(m.id)}
+              canSave={m.role === "assistant" && m.id !== "seed"}
+              onToggleSave={() => toggleSave(m)}
+            />
           ))}
           {thinking && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -238,7 +274,17 @@ function EpisodePage() {
   );
 }
 
-function MessageBubble({ message }: { message: ChatMessage }) {
+function MessageBubble({
+  message,
+  saved,
+  canSave,
+  onToggleSave,
+}: {
+  message: ChatMessage;
+  saved?: boolean;
+  canSave?: boolean;
+  onToggleSave?: () => void;
+}) {
   const isUser = message.role === "user";
   return (
     <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
@@ -253,7 +299,25 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         <div className="prose prose-sm max-w-none prose-p:my-1 prose-strong:font-semibold [&_strong]:text-inherit">
           <ReactMarkdown>{message.content}</ReactMarkdown>
         </div>
+        {canSave && (
+          <div className="mt-2 flex justify-end">
+            <button
+              onClick={onToggleSave}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors",
+                saved
+                  ? "bg-gold/20 text-gold"
+                  : "bg-primary/5 text-primary hover:bg-primary/10",
+              )}
+              aria-label={saved ? "Remove from saved" : "Save answer"}
+            >
+              <Bookmark className={cn("h-3 w-3", saved && "fill-current")} />
+              {saved ? "Saved" : "Save answer"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
