@@ -85,6 +85,11 @@ type EpisodeRow = {
   books: Episode["books"];
   misc: Episode["misc"];
   sort_order: number;
+  source_url: string | null;
+  audio_url: string | null;
+  transcript: string;
+  transcript_status: TranscriptStatus;
+  transcript_error: string | null;
 };
 
 const mapPodcast = (r: PodcastRow): Podcast => ({
@@ -109,6 +114,11 @@ const mapEpisode = (r: EpisodeRow): Episode => ({
   recipes: r.recipes ?? [],
   books: r.books ?? [],
   misc: r.misc ?? [],
+  sourceUrl: r.source_url ?? null,
+  audioUrl: r.audio_url ?? null,
+  transcript: r.transcript ?? "",
+  transcriptStatus: (r.transcript_status ?? "ready") as TranscriptStatus,
+  transcriptError: r.transcript_error ?? null,
 });
 
 // ---------- podcasts / episodes ----------
