@@ -9,7 +9,10 @@ const Input = z.object({
 const TranscriptInput = z.object({
   transcript: z.string().min(50).max(500_000),
   title: z.string().max(300).optional(),
+  podcastName: z.string().max(200).optional(),
+  episodeName: z.string().max(300).optional(),
 });
+
 
 function serverSupabase() {
   const url = process.env.SUPABASE_URL;
