@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { podcasts } from "@/lib/mock-data";
+import { listPodcasts } from "@/lib/data";
 
 export const Route = createFileRoute("/library/shows")({
   head: () => ({
@@ -18,6 +19,8 @@ export const Route = createFileRoute("/library/shows")({
 });
 
 function ShowsPage() {
+  const { data: podcasts = [] } = useQuery({ queryKey: ["podcasts"], queryFn: listPodcasts });
+
   return (
     <AppShell>
       <Link

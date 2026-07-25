@@ -1,64 +1,35 @@
-import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, Clock, Calendar, Play, Send, Bookmark } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import { AppShell } from "@/components/app-shell";
-import { findEpisode } from "@/lib/mock-data";
 import {
-  loadMessages,
-  saveMessages,
-  loadSavedInsights,
-  saveInsight,
-  removeSavedInsight,
+  addMessage,
+  getEpisode,
+  listMessages,
+  listSavedInsights,
   recordEpisodeVisit,
+  saveInsight,
+  unsaveInsightByMessage,
   type ChatMessage,
-} from "@/lib/chat-store";
+} from "@/lib/data";
 import { askEpisode } from "@/lib/chat.functions";
 import { cn } from "@/lib/utils";
 
-
-
 export const Route = createFileRoute("/episode/$episodeId")({
-  loader: ({ params }) => {
-    const found = findEpisode(params.episodeId);
-    if (!found) throw notFound();
-    return found;
-  },
-  head: ({ loaderData }) => {
-    if (!loaderData) {
-      return {
-        meta: [
-          { title: "Episode not found \u2014 Lume" },
-          { name: "robots", content: "noindex" },
-        ],
-      };
-    }
-    const { podcast, episode } = loaderData;
-    const title = `${episode.title} \u2014 ${podcast.title}`;
-    const desc = episode.summary;
-    return {
-      meta: [
-        { title },
-        { name: "description", content: desc },
-        { property: "og:title", content: title },
-        { property: "og:description", content: desc },
-        { property: "og:type", content: "article" },
-        { name: "twitter:card", content: "summary_large_image" },
-      ],
-    };
-  },
+  head: () => ({
+    meta: [
+      { title: "Episode \u2014 Lume" },
+      { name: "description", content: "Chat with Lume about this episode." },
+      { property: "og:title", content: "Episode \u2014 Lume" },
+      { property: "og:description", content: "Chat with Lume about this episode." },
+      { property: "og:type", content: "article" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: EpisodePage,
-  notFoundComponent: () => (
-    <AppShell>
-      <div className="py-16 text-center">
-        <p className="font-serif text-2xl text-primary">Episode not found</p>
-        <Link to="/library" className="mt-3 inline-block text-sm text-gold underline">
-          Back to library
-        </Link>
-      </div>
-    </AppShell>
-  ),
 });
 
 const suggestions = [
@@ -69,27 +40,29 @@ const suggestions = [
 ];
 
 function EpisodePage() {
-  const { podcast, episode } = Route.useLoaderData();
-
-  const initial = useMemo<ChatMessage[]>(
-    () => [
-      {
-        id: "seed",
-        role: "assistant",
-        content: `Hi! I've listened to **${episode.title}**. Ask me anything — recipes, books, key ideas, or specific moments.`,
-        createdAt: Date.now(),
-      },
-    ],
-    [episode.id, episode.title],
-  );
-
-  const [messages, setMessages] = useState<ChatMessage[]>(initial);
-  const [input, setInput] = useState("");
-  const [thinking, setThinking] = useState(false);
-  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
-  const scrollerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { episodeId } = Route.useParams();
   const router = useRouter();
+  const qc = useQueryClient();
+
+  const { data: episodeData, isLoading } = useQuery({
+    queryKey: ["episode", episodeId],
+    queryFn: () => getEpisode(episodeId),
+  });
+
+  const { data: dbMessages = [] } = useQuery({
+    queryKey: ["messages", episodeId],
+    queryFn: () => listMessages(episodeId),
+  });
+
+  const { data: savedInsights = [] } = useQuery({
+    queryKey: ["saved-insights"],
+    queryFn: listSavedInsights,
+  });
+
+  useEffect(() => {
+    if (episodeData) recordEpisodeVisit(episodeId);
+  }, [episodeId, episodeData]);
+
   const handleBack = () => {
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.history.back();
@@ -98,17 +71,30 @@ function EpisodePage() {
     }
   };
 
-  // Load per-episode thread on mount / episode change
-  useEffect(() => {
-    const saved = loadMessages(episode.id);
-    setMessages(saved.length ? saved : initial);
-    setSavedIds(new Set(loadSavedInsights().map((i) => i.id)));
-    recordEpisodeVisit(episode.id);
-  }, [episode.id, initial]);
+  const seed = useMemo<ChatMessage | null>(() => {
+    if (!episodeData) return null;
+    return {
+      id: "seed",
+      role: "assistant",
+      content: `Hi! I've listened to **${episodeData.episode.title}**. Ask me anything — recipes, books, key ideas, or specific moments.`,
+      createdAt: Date.now(),
+    };
+  }, [episodeData]);
 
-  useEffect(() => {
-    saveMessages(episode.id, messages);
-  }, [episode.id, messages]);
+  const messages: ChatMessage[] = useMemo(() => {
+    if (dbMessages.length > 0) return dbMessages;
+    return seed ? [seed] : [];
+  }, [dbMessages, seed]);
+
+  const savedMessageIds = useMemo(
+    () => new Set(savedInsights.map((i) => i.messageId)),
+    [savedInsights],
+  );
+
+  const [input, setInput] = useState("");
+  const [thinking, setThinking] = useState(false);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
@@ -116,76 +102,80 @@ function EpisodePage() {
 
   useEffect(() => {
     inputRef.current?.focus();
-  }, [episode.id]);
-
-  const toggleSave = (assistantMsg: ChatMessage) => {
-    if (assistantMsg.id === "seed") return;
-    const idx = messages.findIndex((m) => m.id === assistantMsg.id);
-    const prevUser = [...messages.slice(0, idx)].reverse().find((m) => m.role === "user");
-    const question = prevUser?.content ?? "Chat insight";
-    const next = new Set(savedIds);
-    if (savedIds.has(assistantMsg.id)) {
-      removeSavedInsight(assistantMsg.id);
-      next.delete(assistantMsg.id);
-    } else {
-      saveInsight({
-        id: assistantMsg.id,
-        episodeId: episode.id,
-        episodeTitle: episode.title,
-        podcastTitle: podcast.title,
-        question,
-        answer: assistantMsg.content,
-        savedAt: Date.now(),
-      });
-      next.add(assistantMsg.id);
-    }
-    setSavedIds(next);
-  };
+  }, [episodeId]);
 
   const ask = useServerFn(askEpisode);
+
+  const toggleSaveMut = useMutation({
+    mutationFn: async (msg: ChatMessage) => {
+      if (msg.id === "seed") return;
+      if (savedMessageIds.has(msg.id)) {
+        await unsaveInsightByMessage(msg.id);
+        return;
+      }
+      const idx = messages.findIndex((m) => m.id === msg.id);
+      const prevUser = [...messages.slice(0, idx)].reverse().find((m) => m.role === "user");
+      await saveInsight({
+        messageId: msg.id,
+        episodeId,
+        question: prevUser?.content ?? "Chat insight",
+        answer: msg.content,
+      });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["saved-insights"] }),
+  });
 
   const send = async (raw: string) => {
     const text = raw.trim();
     if (!text || thinking) return;
-    const userMsg: ChatMessage = {
-      id: `u-${Date.now()}`,
-      role: "user",
-      content: text,
-      createdAt: Date.now(),
-    };
-    const history = messages
-      .filter((m) => m.id !== "seed")
-      .slice(-10)
-      .map((m) => ({ role: m.role, content: m.content }));
-    setMessages((m) => [...m, userMsg]);
     setInput("");
     setThinking(true);
     try {
-      const { answer } = await ask({
-        data: { episodeId: episode.id, question: text, history },
-      });
-      const reply: ChatMessage = {
-        id: `a-${Date.now()}`,
-        role: "assistant",
-        content: answer,
-        createdAt: Date.now(),
-      };
-      setMessages((m) => [...m, reply]);
+      const userMsg = await addMessage(episodeId, "user", text);
+      qc.setQueryData<ChatMessage[]>(["messages", episodeId], (prev = []) => [...prev, userMsg]);
+      const history = messages
+        .filter((m) => m.id !== "seed")
+        .slice(-10)
+        .map((m) => ({ role: m.role, content: m.content }));
+      const { answer } = await ask({ data: { episodeId, question: text, history } });
+      const assistantMsg = await addMessage(episodeId, "assistant", answer);
+      qc.setQueryData<ChatMessage[]>(["messages", episodeId], (prev = []) => [...prev, assistantMsg]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
-      const reply: ChatMessage = {
-        id: `a-${Date.now()}`,
-        role: "assistant",
-        content: `⚠️ ${msg}`,
-        createdAt: Date.now(),
-      };
-      setMessages((m) => [...m, reply]);
+      try {
+        const assistantMsg = await addMessage(episodeId, "assistant", `⚠️ ${msg}`);
+        qc.setQueryData<ChatMessage[]>(["messages", episodeId], (prev = []) => [...prev, assistantMsg]);
+      } catch {
+        /* ignore */
+      }
     } finally {
       setThinking(false);
       requestAnimationFrame(() => inputRef.current?.focus());
     }
   };
 
+  if (isLoading) {
+    return (
+      <AppShell>
+        <p className="py-16 text-center text-sm text-muted-foreground">Loading…</p>
+      </AppShell>
+    );
+  }
+
+  if (!episodeData) {
+    return (
+      <AppShell>
+        <div className="py-16 text-center">
+          <p className="font-serif text-2xl text-primary">Episode not found</p>
+          <Link to="/library" className="mt-3 inline-block text-sm text-gold underline">
+            Back to library
+          </Link>
+        </div>
+      </AppShell>
+    );
+  }
+
+  const { podcast, episode } = episodeData;
 
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
@@ -238,9 +228,9 @@ function EpisodePage() {
             <MessageBubble
               key={m.id}
               message={m}
-              saved={savedIds.has(m.id)}
+              saved={savedMessageIds.has(m.id)}
               canSave={m.role === "assistant" && m.id !== "seed"}
-              onToggleSave={() => toggleSave(m)}
+              onToggleSave={() => toggleSaveMut.mutate(m)}
             />
           ))}
           {thinking && (
@@ -353,4 +343,3 @@ function MessageBubble({
     </div>
   );
 }
-

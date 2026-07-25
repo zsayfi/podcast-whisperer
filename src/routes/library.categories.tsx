@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { podcasts, type PodcastCategory } from "@/lib/mock-data";
+import { listPodcastsWithEpisodes, type PodcastCategory } from "@/lib/data";
 
 export const Route = createFileRoute("/library/categories")({
   head: () => ({
@@ -28,6 +29,11 @@ const CATEGORIES: PodcastCategory[] = [
 ];
 
 function CategoriesPage() {
+  const { data: podcasts = [] } = useQuery({
+    queryKey: ["podcasts-with-episodes"],
+    queryFn: listPodcastsWithEpisodes,
+  });
+
   const grouped = useMemo(() => {
     return CATEGORIES.map((category) => {
       const episodes = podcasts
@@ -35,7 +41,7 @@ function CategoriesPage() {
         .flatMap((p) => p.episodes.map((e) => ({ podcast: p, episode: e })));
       return { category, episodes };
     });
-  }, []);
+  }, [podcasts]);
 
   return (
     <AppShell>
