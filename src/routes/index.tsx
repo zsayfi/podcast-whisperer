@@ -168,25 +168,45 @@ function HomePage() {
 
           <form
             className="mt-4 flex items-center gap-2 rounded-full bg-background/70 px-4 py-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setPrompt("");
-            }}
+            onSubmit={handleAsk}
           >
             <input
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="What is Ella's favourite book right now?"
-              className="min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+              disabled={ask.kind === "loading"}
+              className="min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
             />
             <button
               type="submit"
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-primary transition-colors hover:bg-primary/10"
+              disabled={ask.kind === "loading" || !prompt.trim()}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-primary transition-colors hover:bg-primary/10 disabled:opacity-60"
               aria-label="Send"
             >
-              <Send className="h-4 w-4" />
+              {ask.kind === "loading" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </button>
           </form>
+
+          {ask.kind === "loading" && (
+            <div className="mt-4 flex items-center gap-2 rounded-2xl bg-background/70 p-3 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Searching your library…
+            </div>
+          )}
+          {ask.kind === "answer" && (
+            <div className="mt-4 rounded-2xl bg-background/70 p-4 text-sm leading-relaxed text-card-foreground whitespace-pre-wrap">
+              {ask.text}
+            </div>
+          )}
+          {ask.kind === "error" && (
+            <div className="mt-4 flex items-start gap-2 rounded-2xl bg-destructive/10 p-3 text-xs text-destructive">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>{ask.message}</p>
+            </div>
+          )}
         </div>
       </section>
 
