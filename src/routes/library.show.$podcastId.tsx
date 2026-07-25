@@ -1,52 +1,50 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Clock, Calendar, Play, Headphones } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { findPodcast, type Episode } from "@/lib/mock-data";
+import { getPodcast } from "@/lib/data";
 
 export const Route = createFileRoute("/library/show/$podcastId")({
-  loader: ({ params }) => {
-    const podcast = findPodcast(params.podcastId);
-    if (!podcast) throw notFound();
-    return { podcast };
-  },
-  head: ({ loaderData }) => {
-    if (!loaderData) {
-      return {
-        meta: [
-          { title: "Show not found \u2014 Lume" },
-          { name: "robots", content: "noindex" },
-        ],
-      };
-    }
-    const { podcast } = loaderData;
-    const title = `${podcast.title} \u2014 Lume`;
-    const desc = `All episodes of ${podcast.title} with Lume.`;
-    return {
-      meta: [
-        { title },
-        { name: "description", content: desc },
-        { property: "og:title", content: title },
-        { property: "og:description", content: desc },
-        { property: "og:type", content: "website" },
-        { name: "twitter:card", content: "summary_large_image" },
-      ],
-    };
-  },
+  head: () => ({
+    meta: [
+      { title: "Show \u2014 Lume" },
+      { name: "description", content: "All episodes of this podcast with Lume." },
+      { property: "og:title", content: "Show \u2014 Lume" },
+      { property: "og:description", content: "All episodes of this podcast with Lume." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: ShowPage,
-  notFoundComponent: () => (
-    <AppShell>
-      <div className="py-16 text-center">
-        <p className="font-serif text-2xl text-primary">Show not found</p>
-        <Link to="/library/shows" className="mt-3 inline-block text-sm text-gold underline">
-          Back to shows
-        </Link>
-      </div>
-    </AppShell>
-  ),
 });
 
 function ShowPage() {
-  const { podcast } = Route.useLoaderData();
+  const { podcastId } = Route.useParams();
+  const { data: podcast, isLoading } = useQuery({
+    queryKey: ["podcast", podcastId],
+    queryFn: () => getPodcast(podcastId),
+  });
+
+  if (isLoading) {
+    return (
+      <AppShell>
+        <p className="py-16 text-center text-sm text-muted-foreground">Loading…</p>
+      </AppShell>
+    );
+  }
+
+  if (!podcast) {
+    return (
+      <AppShell>
+        <div className="py-16 text-center">
+          <p className="font-serif text-2xl text-primary">Show not found</p>
+          <Link to="/library/shows" className="mt-3 inline-block text-sm text-gold underline">
+            Back to shows
+          </Link>
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
@@ -92,7 +90,7 @@ function ShowPage() {
       <PageHeader title="List of the episodes" subtitle={`All available episodes of ${podcast.title}`} />
 
       <ul className="space-y-3">
-        {podcast.episodes.map((episode: Episode) => (
+        {podcast.episodes.map((episode) => (
           <li key={episode.id}>
             <Link
               to="/episode/$episodeId"

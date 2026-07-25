@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight, LayoutGrid, Radio, Search } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { podcasts } from "@/lib/mock-data";
+import { listPodcastsWithEpisodes } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/library")({
@@ -32,6 +33,10 @@ const menu: MenuItem[] = [
 
 function LibraryPage() {
   const [query, setQuery] = useState("");
+  const { data: podcasts = [] } = useQuery({
+    queryKey: ["podcasts-with-episodes"],
+    queryFn: listPodcastsWithEpisodes,
+  });
 
   const recentlyUpdated = useMemo(
     () =>
@@ -40,7 +45,7 @@ function LibraryPage() {
           p.title.toLowerCase().includes(query.toLowerCase()) ||
           p.host.toLowerCase().includes(query.toLowerCase()),
       ),
-    [query],
+    [query, podcasts],
   );
 
   return (
@@ -95,32 +100,36 @@ function LibraryPage() {
           </p>
         ) : (
           <ul className="flex gap-4 overflow-x-auto pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {recentlyUpdated.map((p) => (
-              <li key={p.id} className="w-36 flex-shrink-0 sm:w-44">
-                <Link
-                  to="/episode/$episodeId"
-                  params={{ episodeId: p.episodes[0].id }}
-                  className="group block"
-                >
-                  <div className="overflow-hidden rounded-2xl bg-card shadow-sm">
-                    <div className="aspect-square overflow-hidden">
-                      <img
-                        src={p.cover}
-                        alt={p.title}
-                        loading="lazy"
-                        width={400}
-                        height={400}
-                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                      />
+            {recentlyUpdated.map((p) => {
+              const firstEp = p.episodes[0];
+              if (!firstEp) return null;
+              return (
+                <li key={p.id} className="w-36 flex-shrink-0 sm:w-44">
+                  <Link
+                    to="/episode/$episodeId"
+                    params={{ episodeId: firstEp.id }}
+                    className="group block"
+                  >
+                    <div className="overflow-hidden rounded-2xl bg-card shadow-sm">
+                      <div className="aspect-square overflow-hidden">
+                        <img
+                          src={p.cover}
+                          alt={p.title}
+                          loading="lazy"
+                          width={400}
+                          height={400}
+                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                        />
+                      </div>
+                      <div className="p-3">
+                        <p className="truncate font-serif text-sm font-bold text-primary">{p.title}</p>
+                        <p className="mt-0.5 truncate text-xs text-gold">{p.host}</p>
+                      </div>
                     </div>
-                    <div className="p-3">
-                      <p className="truncate font-serif text-sm font-bold text-primary">{p.title}</p>
-                      <p className="mt-0.5 truncate text-xs text-gold">{p.host}</p>
-                    </div>
-                  </div>
-                </Link>
-              </li>
-            ))}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
