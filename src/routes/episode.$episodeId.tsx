@@ -226,6 +226,37 @@ function EpisodePage() {
           </div>
         </section>
 
+        <TranscriptStatusPanel
+          status={episode.transcriptStatus}
+          error={episode.transcriptError}
+        />
+
+        {episode.transcriptStatus === "ready" && episode.summary && (
+          <section className="mb-4 rounded-3xl bg-card p-4 shadow-sm sm:p-5">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-gold">Summary</p>
+            <p className="mt-2 text-sm leading-relaxed text-card-foreground sm:text-base">
+              {episode.summary}
+            </p>
+          </section>
+        )}
+
+        {episode.transcriptStatus === "ready" && episode.transcript && (
+          <details className="mb-4 rounded-3xl bg-card p-4 shadow-sm sm:p-5">
+            <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-primary">
+              <span className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gold">Transcript</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  {Math.round(episode.transcript.length / 1000)}k chars
+                </span>
+              </span>
+              <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+            </summary>
+            <p className="mt-3 max-h-80 overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed text-card-foreground/90">
+              {episode.transcript}
+            </p>
+          </details>
+        )}
+
         <div
           ref={scrollerRef}
           className="flex-1 space-y-4 overflow-y-auto rounded-3xl bg-card/40 p-4 sm:p-5"
@@ -252,16 +283,21 @@ function EpisodePage() {
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2">
-          {suggestions.map((s) => (
+          {(episode.questions.length > 0
+            ? episode.questions.map((q) => q.q)
+            : defaultSuggestions
+          ).map((s) => (
             <button
               key={s}
               onClick={() => send(s)}
-              className="rounded-full bg-card px-3 py-1.5 text-xs font-medium text-primary shadow-sm transition-colors hover:bg-primary hover:text-primary-foreground"
+              disabled={episode.transcriptStatus !== "ready"}
+              className="rounded-full bg-card px-3 py-1.5 text-xs font-medium text-primary shadow-sm transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
             >
               {s}
             </button>
           ))}
         </div>
+
 
         <form
           className="mt-3 flex items-end gap-2 rounded-3xl bg-card p-2 shadow-sm"
