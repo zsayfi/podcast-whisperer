@@ -57,37 +57,19 @@ function HomePage() {
 
   const [activeFilter, setActiveFilter] = useState<PodcastCategory>("HEALTH");
   const [prompt, setPrompt] = useState("");
-  const [podcastUrl, setPodcastUrl] = useState("");
+  const [transcript, setTranscript] = useState("");
   const [scan, setScan] = useState<ScanState>({ kind: "idle" });
 
   const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
-    const url = podcastUrl.trim();
-    if (!url || scan.kind === "working") return;
-    setScan({ kind: "working", label: "Finding the audio\u2026" });
+    const text = transcript.trim();
+    if (!text || scan.kind === "working") return;
+    setScan({ kind: "working", label: "Analyzing transcript\u2026" });
     try {
-      // The server function runs resolve -> download -> transcribe -> analyze
-      // as one call. Show a rolling status hint while it works.
-      const labels = [
-        "Finding the audio\u2026",
-        "Downloading episode\u2026",
-        "Transcribing with Whisper\u2026",
-        "Analyzing the transcript\u2026",
-      ];
-      let i = 0;
-      const timer = setInterval(() => {
-        i = Math.min(i + 1, labels.length - 1);
-        setScan({ kind: "working", label: labels[i] });
-      }, 8000);
-      try {
-        const { episodeId } = await importFn({ data: { url } });
-        clearInterval(timer);
-        setPodcastUrl("");
-        setScan({ kind: "idle" });
-        navigate({ to: "/episode/$episodeId", params: { episodeId } });
-      } finally {
-        clearInterval(timer);
-      }
+      const { episodeId } = await importFn({ data: { transcript: text } });
+      setTranscript("");
+      setScan({ kind: "idle" });
+      navigate({ to: "/episode/$episodeId", params: { episodeId } });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Something went wrong.";
       setScan({ kind: "error", message });
