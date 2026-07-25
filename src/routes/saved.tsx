@@ -65,12 +65,12 @@ function SavedPage() {
     <AppShell>
       <PageHeader title="Saved" subtitle="Your saved recap" />
 
-      <section className="mb-6">
+      <section className="mb-6 px-5 sm:px-6">
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="font-serif text-lg font-bold text-primary">Favourite podcasts</h2>
           <span className="text-xs text-muted-foreground">{favouritePodcasts.length} saved</span>
         </div>
-        <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2">
+        <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
           {favouritePodcasts.map((p) => (
             <Link
               key={p.id}
