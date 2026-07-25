@@ -154,6 +154,7 @@ export const podcasts: Podcast[] = [
     host: "Various Hosts",
     cover: studioImg,
     episodeCount: 12,
+    category: "HISTORY",
     episodes: [
       {
         id: "ss-12",
