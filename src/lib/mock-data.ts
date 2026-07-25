@@ -18,12 +18,21 @@ export type Episode = {
   misc: { title: string; note: string }[];
 };
 
+export type PodcastCategory =
+  | "HEALTH"
+  | "TECH"
+  | "FOOD"
+  | "HISTORY"
+  | "FEMINISM"
+  | "RELATIONSHIPS";
+
 export type Podcast = {
   id: string;
   title: string;
   host: string;
   cover: string;
   episodeCount: number;
+  category: PodcastCategory;
   episodes: Episode[];
 };
 
@@ -34,6 +43,7 @@ export const podcasts: Podcast[] = [
     host: "Ella Mills",
     cover: wellnessImg,
     episodeCount: 42,
+    category: "HEALTH",
     episodes: [
       {
         id: "ws-42",
@@ -94,6 +104,7 @@ export const podcasts: Podcast[] = [
     host: "Dr. Sarah Weber",
     cover: normalImg,
     episodeCount: 18,
+    category: "FEMINISM",
     episodes: [
       {
         id: "idn-18",
@@ -118,6 +129,7 @@ export const podcasts: Podcast[] = [
     host: "Dr. Cate Shanahan",
     cover: nutritionImg,
     episodeCount: 31,
+    category: "FOOD",
     episodes: [
       {
         id: "dn-31",
@@ -142,6 +154,7 @@ export const podcasts: Podcast[] = [
     host: "Various Hosts",
     cover: studioImg,
     episodeCount: 12,
+    category: "HISTORY",
     episodes: [
       {
         id: "ss-12",
@@ -164,6 +177,7 @@ export const podcasts: Podcast[] = [
     host: "Iris Lang",
     cover: kitchenImg,
     episodeCount: 22,
+    category: "FOOD",
     episodes: [
       {
         id: "kn-22",
