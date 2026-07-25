@@ -9,6 +9,7 @@ const Input = z.object({
 const TranscriptInput = z.object({
   transcript: z.string().min(50).max(500_000),
   title: z.string().max(300).optional(),
+  podcastId: z.string().max(200).optional(),
   podcastName: z.string().max(200).optional(),
   episodeName: z.string().max(300).optional(),
 });
