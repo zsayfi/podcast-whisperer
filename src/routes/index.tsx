@@ -64,6 +64,27 @@ function HomePage() {
   const [podcastName, setPodcastName] = useState("");
   const [episodeName, setEpisodeName] = useState("");
   const [scan, setScan] = useState<ScanState>({ kind: "idle" });
+  const [ask, setAsk] = useState<
+    | { kind: "idle" }
+    | { kind: "loading" }
+    | { kind: "answer"; text: string }
+    | { kind: "error"; message: string }
+  >({ kind: "idle" });
+
+  const handleAsk = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = prompt.trim();
+    if (!q || ask.kind === "loading") return;
+    setAsk({ kind: "loading" });
+    try {
+      const { answer } = await askFn({ data: { question: q } });
+      setAsk({ kind: "answer", text: answer });
+      setPrompt("");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Something went wrong.";
+      setAsk({ kind: "error", message });
+    }
+  };
 
   const isNewPodcast = selectedPodcastId === "__new__";
 
