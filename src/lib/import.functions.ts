@@ -94,7 +94,7 @@ export const importEpisode = createServerFn({ method: "POST" })
         title: resolved.title,
         duration: resolved.durationLabel ?? "",
         date_label: resolved.dateLabel ?? new Date().toLocaleDateString(),
-        ep_number: typeof epNumber === "number" ? epNumber + 1 : 1,
+        ep_number: epNumber,
         summary: "",
         source_url: data.url,
         audio_url: resolved.audioUrl,
