@@ -46,6 +46,8 @@ function SavedPage() {
   const { podcast, episode } = featuredEpisode();
   const [tab, setTab] = useState<Tab>("QUESTIONS");
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [activeTag, setActiveTag] = useState<string>("ALL");
+
 
   const items =
     tab === "QUESTIONS"
