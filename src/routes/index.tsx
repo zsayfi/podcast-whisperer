@@ -160,15 +160,40 @@ function HomePage() {
       </section>
 
       <section>
-        <h2 className="font-serif text-3xl font-bold text-primary sm:text-4xl">Add a transcript</h2>
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gold">
+          Transcript import
+        </p>
+        <h2 className="mt-1 font-serif text-3xl font-bold text-primary sm:text-4xl">
+          Add a podcast episode
+        </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Paste an episode transcript and Lume will analyze it so you can ask it anything
+          Name the show and episode, paste the transcript, and Lume will summarize it and open a chat.
         </p>
 
         <form
           onSubmit={handleScan}
-          className="mt-5 rounded-3xl bg-card p-4 shadow-sm sm:p-5"
+          className="mt-5 space-y-3 rounded-3xl bg-card p-4 shadow-sm sm:p-5"
         >
+          <div className="flex items-center gap-2 rounded-full bg-background/70 px-4 py-2">
+            <Mic className="h-4 w-4 shrink-0 text-primary" />
+            <input
+              value={podcastName}
+              onChange={(e) => setPodcastName(e.target.value)}
+              placeholder="Podcast name (e.g. The Wellness Scoop)"
+              disabled={scan.kind === "working"}
+              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
+            />
+          </div>
+          <div className="flex items-center gap-2 rounded-full bg-background/70 px-4 py-2">
+            <FileText className="h-4 w-4 shrink-0 text-primary" />
+            <input
+              value={episodeName}
+              onChange={(e) => setEpisodeName(e.target.value)}
+              placeholder="Episode name"
+              disabled={scan.kind === "working"}
+              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
+            />
+          </div>
           <div className="flex items-center gap-2 rounded-full bg-background/70 px-4 py-2">
             <FileText className="h-4 w-4 shrink-0 text-primary" />
             <textarea
@@ -184,7 +209,7 @@ function HomePage() {
             type="submit"
             disabled={scan.kind === "working" || !transcript.trim()}
             className={cn(
-              "mt-3 flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold tracking-wide transition-colors",
+              "flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold tracking-wide transition-colors",
               "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60",
             )}
           >
@@ -197,17 +222,17 @@ function HomePage() {
             )}
           </button>
           {scan.kind === "error" && (
-            <div className="mt-3 flex items-start gap-2 rounded-2xl bg-destructive/10 p-3 text-xs text-destructive">
+            <div className="flex items-start gap-2 rounded-2xl bg-destructive/10 p-3 text-xs text-destructive">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               <p>{scan.message}</p>
             </div>
           )}
-          <p className="mt-3 text-xs text-muted-foreground">
-            Paste at least a few paragraphs of transcript text. Lume will summarize it,
-            extract books, recipes and practices, and open a chat you can ask anything.
+          <p className="text-xs text-muted-foreground">
+            Podcast and episode names are optional. Lume falls back to a generated title if you leave them blank.
           </p>
         </form>
       </section>
+
 
 
       <section className="mt-10">
