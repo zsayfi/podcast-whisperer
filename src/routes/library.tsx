@@ -26,8 +26,8 @@ type MenuItem = {
 };
 
 const menu: MenuItem[] = [
-  { label: "Shows", icon: Radio, to: "/library" },
-  { label: "Categories", icon: LayoutGrid, to: "/library" },
+  { label: "Shows", icon: Radio, to: "/library/shows" },
+  { label: "Categories", icon: LayoutGrid, to: "/library/categories" },
 ];
 
 function LibraryPage() {
