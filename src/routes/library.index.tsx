@@ -25,7 +25,7 @@ export const Route = createFileRoute("/library/")({
 type MenuItem = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  to: string;
+  to: LibraryMenuTo;
 };
 
 const menu: MenuItem[] = [
