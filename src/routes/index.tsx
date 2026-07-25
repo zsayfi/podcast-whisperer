@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Send, Mic } from "lucide-react";
+import { Send, Mic, Link2, Loader2, Check } from "lucide-react";
 import { useState } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { recentEpisodes, newEpisodes } from "@/lib/mock-data";
@@ -26,6 +26,21 @@ function HomePage() {
   const fresh = newEpisodes();
   const [activeFilter, setActiveFilter] = useState<(typeof filters)[number]>("HEALTH");
   const [prompt, setPrompt] = useState("");
+  const [podcastUrl, setPodcastUrl] = useState("");
+  const [scanState, setScanState] = useState<"idle" | "scanning" | "done">("idle");
+
+  const handleScan = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!podcastUrl.trim()) return;
+    setScanState("scanning");
+    setTimeout(() => {
+      setScanState("done");
+      setTimeout(() => {
+        setScanState("idle");
+        setPodcastUrl("");
+      }, 2000);
+    }, 1800);
+  };
 
   return (
     <AppShell>
@@ -154,6 +169,56 @@ function HomePage() {
           ))}
         </ul>
       </section>
+
+      <section className="mt-10">
+        <h2 className="font-serif text-3xl font-bold text-primary sm:text-4xl">Add a podcast</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Paste a link and Lume will transcribe it so you can ask it anything
+        </p>
+
+        <form
+          onSubmit={handleScan}
+          className="mt-5 rounded-3xl bg-card p-4 shadow-sm sm:p-5"
+        >
+          <div className="flex items-center gap-2 rounded-full bg-background/70 px-4 py-2">
+            <Link2 className="h-4 w-4 shrink-0 text-primary" />
+            <input
+              type="url"
+              value={podcastUrl}
+              onChange={(e) => setPodcastUrl(e.target.value)}
+              placeholder="https://open.spotify.com/episode/..."
+              disabled={scanState === "scanning"}
+              className="min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={scanState !== "idle" || !podcastUrl.trim()}
+            className={cn(
+              "mt-3 flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold tracking-wide transition-colors",
+              scanState === "done"
+                ? "bg-gold text-gold-foreground"
+                : "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60",
+            )}
+          >
+            {scanState === "scanning" && (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Scanning episode…
+              </>
+            )}
+            {scanState === "done" && (
+              <>
+                <Check className="h-4 w-4" /> Ready to chat
+              </>
+            )}
+            {scanState === "idle" && "Scan podcast"}
+          </button>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Works with Spotify, Apple Podcasts, YouTube and direct RSS links.
+          </p>
+        </form>
+      </section>
+
     </AppShell>
   );
 }
