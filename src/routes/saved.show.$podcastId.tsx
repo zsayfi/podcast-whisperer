@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, Clock, Calendar, Play, Headphones } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { findPodcast } from "@/lib/mock-data";
+import { findPodcast, type Episode } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/saved/show/$podcastId")({
   loader: ({ params }) => {
