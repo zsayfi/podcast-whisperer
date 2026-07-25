@@ -137,9 +137,19 @@ function HomePage() {
           })}
         </div>
 
-        <ul className="mt-5 space-y-4">
-          {fresh.map(({ podcast, episode }) => (
-            <li key={episode.id}>
+        {(() => {
+          const filtered = fresh.filter(({ podcast }) => podcast.category === activeFilter);
+          if (filtered.length === 0) {
+            return (
+              <p className="mt-6 rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground">
+                No {activeFilter.toLowerCase()} episodes yet. Add a podcast below to get started.
+              </p>
+            );
+          }
+          return (
+            <ul className="mt-5 space-y-4">
+              {filtered.map(({ podcast, episode }) => (
+                <li key={episode.id}>
               <Link
                 to="/episode/$episodeId"
                 params={{ episodeId: episode.id }}
