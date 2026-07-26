@@ -141,8 +141,8 @@ function HomePage() {
                   className="h-full w-full object-cover transition-transform group-hover:scale-105"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-primary/85 via-primary/40 to-transparent p-3 pt-10 text-primary-foreground">
-                  <p className="text-sm font-semibold leading-tight">{podcast.title}</p>
-                  <p className="text-xs opacity-90">Ep. {episode.epNumber}</p>
+                  <p className="line-clamp-1 text-sm font-semibold leading-tight">{podcast.title}</p>
+                  <p className="line-clamp-2 text-xs opacity-90">{episode.title}</p>
                 </div>
               </Link>
             </li>
