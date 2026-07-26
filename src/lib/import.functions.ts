@@ -12,7 +12,37 @@ const TranscriptInput = z.object({
   podcastId: z.string().max(200).optional(),
   podcastName: z.string().max(200).optional(),
   episodeName: z.string().max(300).optional(),
+  appleUrl: z.string().url().max(2000).optional(),
 });
+
+function parseAppleId(url: string): string | null {
+  try {
+    const u = new URL(url);
+    if (!/podcasts\.apple\.com$/.test(u.hostname)) return null;
+    const m = u.pathname.match(/\/id(\d+)/);
+    return m ? m[1] : null;
+  } catch {
+    return null;
+  }
+}
+
+async function resolveAppleArtwork(appleUrl: string): Promise<string | null> {
+  const id = parseAppleId(appleUrl);
+  if (!id) return null;
+  try {
+    const res = await fetch(
+      `https://itunes.apple.com/lookup?id=${id}&entity=podcast`,
+    );
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      results?: Array<{ artworkUrl600?: string; artworkUrl100?: string }>;
+    };
+    const r = json.results?.[0];
+    return r?.artworkUrl600 || r?.artworkUrl100 || null;
+  } catch {
+    return null;
+  }
+}
 
 
 function serverSupabase() {
