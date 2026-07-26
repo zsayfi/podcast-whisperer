@@ -104,11 +104,13 @@ function HomePage() {
             ? podcastName.trim() || undefined
             : undefined,
           episodeName: episodeName.trim() || undefined,
+          appleUrl: appleUrl.trim() || undefined,
         },
       });
       setTranscript("");
       setPodcastName("");
       setEpisodeName("");
+      setAppleUrl("");
       setSelectedPodcastId("");
       setScan({ kind: "idle" });
       navigate({ to: "/episode/$episodeId", params: { episodeId } });
