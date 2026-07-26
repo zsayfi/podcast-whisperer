@@ -1,0 +1,1 @@
+ALTER TABLE public.podcasts ADD COLUMN IF NOT EXISTS apple_url text, ADD COLUMN IF NOT EXISTS cover_url text;
