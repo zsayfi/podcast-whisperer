@@ -100,8 +100,10 @@ const mapPodcast = (r: PodcastRow): Podcast => ({
   id: r.id,
   title: r.title,
   host: r.host,
-  cover: coverFor(r.cover_key),
+  cover: r.cover_url || coverFor(r.cover_key),
   coverKey: r.cover_key,
+  coverUrl: r.cover_url ?? null,
+  appleUrl: r.apple_url ?? null,
   episodeCount: r.episode_count,
   category: r.category,
 });
