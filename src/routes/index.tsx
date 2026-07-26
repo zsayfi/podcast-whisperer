@@ -279,6 +279,17 @@ function HomePage() {
             />
           </div>
           <div className="flex items-center gap-2 rounded-full bg-background/70 px-4 py-2">
+            <LinkIcon className="h-4 w-4 shrink-0 text-primary" />
+            <input
+              type="url"
+              value={appleUrl}
+              onChange={(e) => setAppleUrl(e.target.value)}
+              placeholder="Apple Podcasts link (optional) — https://podcasts.apple.com/…"
+              disabled={scan.kind === "working"}
+              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
+            />
+          </div>
+          <div className="flex items-center gap-2 rounded-full bg-background/70 px-4 py-2">
             <FileText className="h-4 w-4 shrink-0 text-primary" />
             <textarea
               value={transcript}
