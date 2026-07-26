@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Send, Mic, FileText, Loader2, AlertCircle } from "lucide-react";
+import { Send, Mic, FileText, Loader2, AlertCircle, Link as LinkIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
