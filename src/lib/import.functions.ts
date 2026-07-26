@@ -335,6 +335,16 @@ export const importTranscript = createServerFn({ method: "POST" })
       .update({ episode_count: epNumber })
       .eq("id", podcastId);
 
+    // Optional Apple Podcasts artwork — refresh cover for new or existing show.
+    if (data.appleUrl) {
+      const artwork = await resolveAppleArtwork(data.appleUrl);
+      const patch: { apple_url: string; cover_url?: string } = {
+        apple_url: data.appleUrl,
+      };
+      if (artwork) patch.cover_url = artwork;
+      await sb.from("podcasts").update(patch).eq("id", podcastId);
+    }
+
     return { episodeId };
   });
 
