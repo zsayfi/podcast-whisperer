@@ -64,6 +64,7 @@ function HomePage() {
   const [selectedPodcastId, setSelectedPodcastId] = useState<string>("");
   const [podcastName, setPodcastName] = useState("");
   const [episodeName, setEpisodeName] = useState("");
+  const [appleUrl, setAppleUrl] = useState("");
   const [scan, setScan] = useState<ScanState>({ kind: "idle" });
   const [ask, setAsk] = useState<
     | { kind: "idle" }
