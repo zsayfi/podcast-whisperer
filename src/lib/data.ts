@@ -5,13 +5,7 @@ import nutritionImg from "@/assets/podcast-nutrition.jpg";
 import studioImg from "@/assets/podcast-studio.jpg";
 import kitchenImg from "@/assets/podcast-kitchen.jpg";
 
-export type PodcastCategory =
-  | "HEALTH"
-  | "TECH"
-  | "FOOD"
-  | "HISTORY"
-  | "FEMINISM"
-  | "RELATIONSHIPS";
+export type PodcastCategory = "HEALTH" | "TECH" | "FOOD" | "HISTORY" | "FEMINISM" | "RELATIONSHIPS";
 
 export type TranscriptStatus =
   | "pending"
@@ -46,6 +40,8 @@ export type Podcast = {
   host: string;
   cover: string;
   coverKey: string;
+  coverUrl: string | null;
+  appleUrl: string | null;
   episodeCount: number;
   category: PodcastCategory;
 };
@@ -67,6 +63,8 @@ type PodcastRow = {
   title: string;
   host: string;
   cover_key: string;
+  cover_url: string | null;
+  apple_url: string | null;
   episode_count: number;
   category: PodcastCategory;
   sort_order: number;
@@ -96,8 +94,10 @@ const mapPodcast = (r: PodcastRow): Podcast => ({
   id: r.id,
   title: r.title,
   host: r.host,
-  cover: coverFor(r.cover_key),
+  cover: r.cover_url || coverFor(r.cover_key),
   coverKey: r.cover_key,
+  coverUrl: r.cover_url ?? null,
+  appleUrl: r.apple_url ?? null,
   episodeCount: r.episode_count,
   category: r.category,
 });
@@ -124,10 +124,7 @@ const mapEpisode = (r: EpisodeRow): Episode => ({
 // ---------- podcasts / episodes ----------
 
 export async function listPodcasts(): Promise<Podcast[]> {
-  const { data, error } = await supabase
-    .from("podcasts")
-    .select("*")
-    .order("sort_order");
+  const { data, error } = await supabase.from("podcasts").select("*").order("sort_order");
   if (error) throw error;
   return (data as unknown as PodcastRow[]).map(mapPodcast);
 }
@@ -148,11 +145,7 @@ export async function listPodcastsWithEpisodes(): Promise<PodcastWithEpisodes[]>
 }
 
 export async function getPodcast(id: string): Promise<PodcastWithEpisodes | null> {
-  const { data: p, error } = await supabase
-    .from("podcasts")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  const { data: p, error } = await supabase.from("podcasts").select("*").eq("id", id).maybeSingle();
   if (error) throw error;
   if (!p) return null;
   const { data: eps, error: e2 } = await supabase
@@ -286,20 +279,14 @@ export async function saveInsight(input: {
 }
 
 export async function unsaveInsightByMessage(messageId: string): Promise<void> {
-  const { error } = await supabase
-    .from("saved_insights")
-    .delete()
-    .eq("message_id", messageId);
+  const { error } = await supabase.from("saved_insights").delete().eq("message_id", messageId);
   if (error) throw error;
 }
 
 // ---------- saved tags ----------
 
 export async function listSavedTags(): Promise<string[]> {
-  const { data, error } = await supabase
-    .from("saved_tags")
-    .select("tag")
-    .order("created_at");
+  const { data, error } = await supabase.from("saved_tags").select("tag").order("created_at");
   if (error) throw error;
   return (data ?? []).map((r) => r.tag);
 }
@@ -326,17 +313,12 @@ export async function listFavouritePodcastIds(): Promise<string[]> {
 }
 
 export async function addFavouritePodcast(id: string): Promise<void> {
-  const { error } = await supabase
-    .from("favourite_podcasts")
-    .upsert({ podcast_id: id });
+  const { error } = await supabase.from("favourite_podcasts").upsert({ podcast_id: id });
   if (error) throw error;
 }
 
 export async function removeFavouritePodcast(id: string): Promise<void> {
-  const { error } = await supabase
-    .from("favourite_podcasts")
-    .delete()
-    .eq("podcast_id", id);
+  const { error } = await supabase.from("favourite_podcasts").delete().eq("podcast_id", id);
   if (error) throw error;
 }
 
@@ -349,9 +331,10 @@ export async function recordEpisodeVisit(episodeId: string): Promise<void> {
   });
 }
 
-export async function getLastVisitedEpisode(): Promise<
-  { podcast: Podcast; episode: Episode } | null
-> {
+export async function getLastVisitedEpisode(): Promise<{
+  podcast: Podcast;
+  episode: Episode;
+} | null> {
   const { data, error } = await supabase
     .from("episode_visits")
     .select("episode_id")

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Send, Mic, FileText, Loader2, AlertCircle } from "lucide-react";
+import { Send, Mic, FileText, Loader2, AlertCircle, Link as LinkIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -14,9 +14,17 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Lume \u2014 Podcast Q&A" },
-      { name: "description", content: "Paste any podcast episode link. Lume transcribes it, then answers your questions about books, recipes, ideas and more." },
+      {
+        name: "description",
+        content:
+          "Paste any podcast episode link. Lume transcribes it, then answers your questions about books, recipes, ideas and more.",
+      },
       { property: "og:title", content: "Lume \u2014 Podcast Q&A" },
-      { property: "og:description", content: "Paste any podcast episode link. Lume transcribes it, then answers your questions about books, recipes, ideas and more." },
+      {
+        property: "og:description",
+        content:
+          "Paste any podcast episode link. Lume transcribes it, then answers your questions about books, recipes, ideas and more.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -24,7 +32,14 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-const filters: PodcastCategory[] = ["HEALTH", "TECH", "FOOD", "HISTORY", "FEMINISM", "RELATIONSHIPS"];
+const filters: PodcastCategory[] = [
+  "HEALTH",
+  "TECH",
+  "FOOD",
+  "HISTORY",
+  "FEMINISM",
+  "RELATIONSHIPS",
+];
 
 type ScanState =
   | { kind: "idle" }
@@ -64,6 +79,7 @@ function HomePage() {
   const [selectedPodcastId, setSelectedPodcastId] = useState<string>("");
   const [podcastName, setPodcastName] = useState("");
   const [episodeName, setEpisodeName] = useState("");
+  const [appleUrl, setAppleUrl] = useState("");
   const [scan, setScan] = useState<ScanState>({ kind: "idle" });
   const [ask, setAsk] = useState<
     | { kind: "idle" }
@@ -97,17 +113,16 @@ function HomePage() {
       const { episodeId } = await importFn({
         data: {
           transcript: text,
-          podcastId:
-            selectedPodcastId && !isNewPodcast ? selectedPodcastId : undefined,
-          podcastName: isNewPodcast
-            ? podcastName.trim() || undefined
-            : undefined,
+          podcastId: selectedPodcastId && !isNewPodcast ? selectedPodcastId : undefined,
+          podcastName: isNewPodcast ? podcastName.trim() || undefined : undefined,
           episodeName: episodeName.trim() || undefined,
+          appleUrl: appleUrl.trim() || undefined,
         },
       });
       setTranscript("");
       setPodcastName("");
       setEpisodeName("");
+      setAppleUrl("");
       setSelectedPodcastId("");
       setScan({ kind: "idle" });
       navigate({ to: "/episode/$episodeId", params: { episodeId } });
@@ -116,8 +131,6 @@ function HomePage() {
       setScan({ kind: "error", message });
     }
   };
-
-
 
   return (
     <AppShell>
@@ -141,7 +154,9 @@ function HomePage() {
                   className="h-full w-full object-cover transition-transform group-hover:scale-105"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-primary/85 via-primary/40 to-transparent p-3 pt-10 text-primary-foreground">
-                  <p className="line-clamp-1 text-sm font-semibold leading-tight">{podcast.title}</p>
+                  <p className="line-clamp-1 text-sm font-semibold leading-tight">
+                    {podcast.title}
+                  </p>
                   <p className="line-clamp-2 text-xs opacity-90">{episode.title}</p>
                 </div>
               </Link>
@@ -151,7 +166,9 @@ function HomePage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="font-serif text-3xl font-bold text-primary sm:text-4xl">Latest Lume highlights</h2>
+        <h2 className="font-serif text-3xl font-bold text-primary sm:text-4xl">
+          Latest Lume highlights
+        </h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Intelligent AI support helping to browse through your favourite podcasts
         </p>
@@ -229,7 +246,8 @@ function HomePage() {
           Add a podcast episode
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Name the show and episode, paste the transcript, and Lume will summarize it and open a chat.
+          Name the show and episode, paste the transcript, and Lume will summarize it and open a
+          chat.
         </p>
 
         <form
@@ -276,6 +294,17 @@ function HomePage() {
             />
           </div>
           <div className="flex items-center gap-2 rounded-full bg-background/70 px-4 py-2">
+            <LinkIcon className="h-4 w-4 shrink-0 text-primary" />
+            <input
+              type="url"
+              value={appleUrl}
+              onChange={(e) => setAppleUrl(e.target.value)}
+              placeholder="Apple Podcasts link (optional) — https://podcasts.apple.com/…"
+              disabled={scan.kind === "working"}
+              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
+            />
+          </div>
+          <div className="flex items-center gap-2 rounded-full bg-background/70 px-4 py-2">
             <FileText className="h-4 w-4 shrink-0 text-primary" />
             <textarea
               value={transcript}
@@ -309,16 +338,17 @@ function HomePage() {
             </div>
           )}
           <p className="text-xs text-muted-foreground">
-            Podcast and episode names are optional. Lume falls back to a generated title if you leave them blank.
+            Podcast and episode names are optional. Lume falls back to a generated title if you
+            leave them blank.
           </p>
         </form>
       </section>
 
-
-
       <section className="mt-10">
         <h2 className="font-serif text-3xl font-bold text-primary sm:text-4xl">New episodes</h2>
-        <p className="mt-1 text-sm text-muted-foreground">New episodes of your favourite podcasts</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          New episodes of your favourite podcasts
+        </p>
 
         <div className="mt-4 flex flex-wrap gap-2">
           {filters.map((f) => {
@@ -353,38 +383,37 @@ function HomePage() {
             <ul className="mt-5 space-y-4">
               {filtered.map(({ podcast, episode }) => (
                 <li key={episode.id}>
-              <Link
-                to="/episode/$episodeId"
-                params={{ episodeId: episode.id }}
-                className="flex overflow-hidden rounded-3xl bg-card shadow-sm transition-shadow hover:shadow-md"
-              >
-                <img
-                  src={podcast.cover}
-                  alt={podcast.title}
-                  loading="lazy"
-                  width={800}
-                  height={800}
-                  className="h-28 w-24 shrink-0 object-cover sm:h-32 sm:w-32"
-                />
-                <div className="min-w-0 flex-1 p-4">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-gold">
-                    {podcast.title}
-                  </p>
-                  <p className="mt-1 font-serif text-base font-bold leading-snug text-primary sm:text-lg">
-                    {episode.title}
-                  </p>
-                  <p className="mt-2 text-xs text-card-foreground/80">
-                    {"\u25CB"} {episode.duration} · {episode.date}
-                  </p>
-                </div>
-              </Link>
+                  <Link
+                    to="/episode/$episodeId"
+                    params={{ episodeId: episode.id }}
+                    className="flex overflow-hidden rounded-3xl bg-card shadow-sm transition-shadow hover:shadow-md"
+                  >
+                    <img
+                      src={podcast.cover}
+                      alt={podcast.title}
+                      loading="lazy"
+                      width={800}
+                      height={800}
+                      className="h-28 w-24 shrink-0 object-cover sm:h-32 sm:w-32"
+                    />
+                    <div className="min-w-0 flex-1 p-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-gold">
+                        {podcast.title}
+                      </p>
+                      <p className="mt-1 font-serif text-base font-bold leading-snug text-primary sm:text-lg">
+                        {episode.title}
+                      </p>
+                      <p className="mt-2 text-xs text-card-foreground/80">
+                        {"\u25CB"} {episode.duration} · {episode.date}
+                      </p>
+                    </div>
+                  </Link>
                 </li>
               ))}
             </ul>
           );
         })()}
       </section>
-
     </AppShell>
   );
 }

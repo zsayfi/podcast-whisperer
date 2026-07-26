@@ -171,8 +171,10 @@ export type Database = {
       }
       podcasts: {
         Row: {
+          apple_url: string | null
           category: string
           cover_key: string
+          cover_url: string | null
           created_at: string
           episode_count: number
           host: string
@@ -184,8 +186,10 @@ export type Database = {
           website_url: string | null
         }
         Insert: {
+          apple_url?: string | null
           category: string
           cover_key: string
+          cover_url?: string | null
           created_at?: string
           episode_count?: number
           host: string
@@ -197,8 +201,10 @@ export type Database = {
           website_url?: string | null
         }
         Update: {
+          apple_url?: string | null
           category?: string
           cover_key?: string
+          cover_url?: string | null
           created_at?: string
           episode_count?: number
           host?: string
