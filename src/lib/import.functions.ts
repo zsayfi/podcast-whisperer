@@ -30,9 +30,7 @@ async function resolveAppleArtwork(appleUrl: string): Promise<string | null> {
   const id = parseAppleId(appleUrl);
   if (!id) return null;
   try {
-    const res = await fetch(
-      `https://itunes.apple.com/lookup?id=${id}&entity=podcast`,
-    );
+    const res = await fetch(`https://itunes.apple.com/lookup?id=${id}&entity=podcast`);
     if (!res.ok) return null;
     const json = (await res.json()) as {
       results?: Array<{ artworkUrl600?: string; artworkUrl100?: string }>;
@@ -43,7 +41,6 @@ async function resolveAppleArtwork(appleUrl: string): Promise<string | null> {
     return null;
   }
 }
-
 
 function serverSupabase() {
   const url = process.env.SUPABASE_URL;
@@ -70,13 +67,8 @@ export const importEpisode = createServerFn({ method: "POST" })
     const lovableKey = process.env.LOVABLE_API_KEY;
     if (!lovableKey) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const {
-      resolveEpisode,
-      downloadAudio,
-      transcribeAudio,
-      analyzeTranscript,
-      slugify,
-    } = await import("./import.server");
+    const { resolveEpisode, downloadAudio, transcribeAudio, analyzeTranscript, slugify } =
+      await import("./import.server");
 
     const sb = serverSupabase();
 
@@ -96,9 +88,7 @@ export const importEpisode = createServerFn({ method: "POST" })
     const resolved = await resolveEpisode(data.url);
 
     // 2. Upsert podcast row.
-    const podcastId = slugify(
-      resolved.rssUrl ?? resolved.podcastTitle ?? "podcast",
-    );
+    const podcastId = slugify(resolved.rssUrl ?? resolved.podcastTitle ?? "podcast");
     const coverKey = ["wellness", "normal", "nutrition", "studio", "kitchen"][
       Math.abs(hashCode(podcastId)) % 5
     ];
@@ -222,9 +212,7 @@ export const importTranscript = createServerFn({ method: "POST" })
 
     const derivedTitle =
       providedTitle ||
-      (analysis.summary
-        ? analysis.summary.split(/[.!?]/)[0].slice(0, 100).trim()
-        : "") ||
+      (analysis.summary ? analysis.summary.split(/[.!?]/)[0].slice(0, 100).trim() : "") ||
       `Transcript ${new Date().toLocaleDateString()}`;
 
     const podcastTitle = providedPodcastName || "Pasted transcripts";
@@ -245,13 +233,10 @@ export const importTranscript = createServerFn({ method: "POST" })
 
     if (!podcastId && providedPodcastName) {
       // Forgiving match against existing shows by normalized title.
-      const { data: existingShows } = await sb
-        .from("podcasts")
-        .select("id, title");
+      const { data: existingShows } = await sb.from("podcasts").select("id, title");
       const match = (existingShows ?? []).find(
         (r: { id: string; title: string }) =>
-          r.title.trim().replace(/\s+/g, " ").toLocaleLowerCase() ===
-          normalizedKey,
+          r.title.trim().replace(/\s+/g, " ").toLocaleLowerCase() === normalizedKey,
       );
       if (match) podcastId = match.id;
     } else if (!podcastId && !providedPodcastName) {
@@ -330,10 +315,7 @@ export const importTranscript = createServerFn({ method: "POST" })
     if (error) throw new Error(`Episode insert failed: ${error.message}`);
 
     // Refresh episode_count on the podcast so Library → Shows is accurate.
-    await sb
-      .from("podcasts")
-      .update({ episode_count: epNumber })
-      .eq("id", podcastId);
+    await sb.from("podcasts").update({ episode_count: epNumber }).eq("id", podcastId);
 
     // Optional Apple Podcasts artwork — refresh cover for new or existing show.
     if (data.appleUrl) {
