@@ -46,6 +46,8 @@ export type Podcast = {
   host: string;
   cover: string;
   coverKey: string;
+  coverUrl: string | null;
+  appleUrl: string | null;
   episodeCount: number;
   category: PodcastCategory;
 };
@@ -67,6 +69,8 @@ type PodcastRow = {
   title: string;
   host: string;
   cover_key: string;
+  cover_url: string | null;
+  apple_url: string | null;
   episode_count: number;
   category: PodcastCategory;
   sort_order: number;
