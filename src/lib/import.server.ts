@@ -16,8 +16,7 @@ export type ResolvedEpisode = {
   dateLabel?: string;
 };
 
-const USER_AGENT =
-  "Mozilla/5.0 (compatible; LumeBot/1.0; +https://lume.app) TranscriberBot";
+const USER_AGENT = "Mozilla/5.0 (compatible; LumeBot/1.0; +https://lume.app) TranscriberBot";
 
 async function fetchWithUA(url: string, init?: RequestInit) {
   return fetch(url, {
@@ -56,7 +55,9 @@ function attr(source: string, tagName: string, attrName: string): string | undef
 }
 
 function stripHtml(s: string): string {
-  return decodeEntities(s.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+  return decodeEntities(s.replace(/<[^>]+>/g, " "))
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function humanDuration(seconds: number): string {
@@ -97,10 +98,7 @@ async function parseRssForEpisode(
 ): Promise<ResolvedEpisode | null> {
   const channelTitle = tag(rssText, "title") ?? "Podcast";
   const channelAuthor =
-    tag(rssText, "itunes:author") ??
-    tag(rssText, "author") ??
-    tag(rssText, "managingEditor") ??
-    "";
+    tag(rssText, "itunes:author") ?? tag(rssText, "author") ?? tag(rssText, "managingEditor") ?? "";
   const websiteUrl = tag(rssText, "link");
 
   const items = rssText.match(/<item\b[\s\S]*?<\/item>/gi) ?? [];
@@ -155,8 +153,7 @@ async function discoverFromHtml(url: string, html: string): Promise<string | nul
   // Look for <link rel="alternate" type="application/rss+xml" href="...">
   const linkRe =
     /<link\b[^>]*rel=["']alternate["'][^>]*type=["']application\/rss\+xml["'][^>]*href=["']([^"']+)["']/i;
-  const linkRe2 =
-    /<link\b[^>]*type=["']application\/rss\+xml["'][^>]*href=["']([^"']+)["']/i;
+  const linkRe2 = /<link\b[^>]*type=["']application\/rss\+xml["'][^>]*href=["']([^"']+)["']/i;
   const m = html.match(linkRe) ?? html.match(linkRe2);
   if (m) return new URL(m[1], url).toString();
   return null;
@@ -186,7 +183,9 @@ export async function resolveEpisode(rawUrl: string): Promise<ResolvedEpisode> {
     // Drain the body so the connection can close cleanly.
     try {
       await head.body?.cancel();
-    } catch {}
+    } catch {
+      // Best-effort cleanup only.
+    }
     const hostname = (() => {
       try {
         return new URL(url).hostname;
@@ -196,10 +195,7 @@ export async function resolveEpisode(rawUrl: string): Promise<ResolvedEpisode> {
     })();
     return {
       audioUrl: url,
-      title: decodeURIComponent(url.split("/").pop() ?? "Episode").replace(
-        /\.[a-z0-9]+$/i,
-        "",
-      ),
+      title: decodeURIComponent(url.split("/").pop() ?? "Episode").replace(/\.[a-z0-9]+$/i, ""),
       podcastTitle: hostname,
       podcastHost: hostname,
     };
@@ -276,24 +272,21 @@ function extToFilename(url: string, mime: string): string {
 export async function transcribeAudio(
   audio: Blob,
   sourceUrl: string,
-  lovableApiKey: string,
+  openAiApiKey: string,
 ): Promise<string> {
   const form = new FormData();
-  form.append("model", "openai/gpt-4o-mini-transcribe");
+  form.append("model", "whisper-1");
   form.append("file", audio, extToFilename(sourceUrl, audio.type));
 
-  const res = await fetch(
-    "https://ai.gateway.lovable.dev/v1/audio/transcriptions",
-    {
-      method: "POST",
-      headers: { Authorization: `Bearer ${lovableApiKey}` },
-      body: form,
-    },
-  );
+  const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${openAiApiKey}` },
+    body: form,
+  });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     if (res.status === 402) {
-      throw new Error("AI credits exhausted — add credits to keep transcribing.");
+      throw new Error("OpenAI billing needs attention before transcribing.");
     }
     if (res.status === 429) {
       throw new Error("Rate limited by the AI gateway — try again in a minute.");
@@ -312,13 +305,7 @@ export type EpisodeAnalysis = {
   books: { title: string; author: string }[];
   recipes: { title: string; note: string }[];
   misc: { title: string; note: string }[];
-  suggestedCategory:
-    | "HEALTH"
-    | "TECH"
-    | "FOOD"
-    | "HISTORY"
-    | "FEMINISM"
-    | "RELATIONSHIPS";
+  suggestedCategory: "HEALTH" | "TECH" | "FOOD" | "HISTORY" | "FEMINISM" | "RELATIONSHIPS";
 };
 
 const ANALYSIS_SYSTEM = `You analyze a podcast episode transcript. Return valid JSON only, matching this shape:
@@ -341,14 +328,13 @@ Rules:
 export async function analyzeTranscript(
   transcript: string,
   episodeTitle: string,
-  lovableApiKey: string,
+  openAiApiKey: string,
 ): Promise<EpisodeAnalysis> {
-  // Truncate transcript defensively (~120k chars ≈ 30k tokens is still safe for Gemini Flash).
-  const truncated =
-    transcript.length > 120_000 ? transcript.slice(0, 120_000) : transcript;
+  // Truncate transcript defensively (~120k chars keeps import costs predictable).
+  const truncated = transcript.length > 120_000 ? transcript.slice(0, 120_000) : transcript;
 
   const body = {
-    model: "google/gemini-3.6-flash",
+    model: process.env.OPENAI_MODEL || "gpt-4.1-nano",
     messages: [
       { role: "system", content: ANALYSIS_SYSTEM },
       {
@@ -359,11 +345,11 @@ export async function analyzeTranscript(
     response_format: { type: "json_object" },
   };
 
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${lovableApiKey}`,
+      Authorization: `Bearer ${openAiApiKey}`,
     },
     body: JSON.stringify(body),
   });
@@ -388,34 +374,31 @@ function safeParseJson(text: string): unknown {
     if (m) {
       try {
         return JSON.parse(m[0]);
-      } catch {}
+      } catch {
+        // Fall through to the empty object below.
+      }
     }
     return {};
   }
 }
 
-const CATEGORIES = [
-  "HEALTH",
-  "TECH",
-  "FOOD",
-  "HISTORY",
-  "FEMINISM",
-  "RELATIONSHIPS",
-] as const;
+const CATEGORIES = ["HEALTH", "TECH", "FOOD", "HISTORY", "FEMINISM", "RELATIONSHIPS"] as const;
+
+type AnalysisCategory = (typeof CATEGORIES)[number];
+
+function isAnalysisCategory(value: string): value is AnalysisCategory {
+  return CATEGORIES.includes(value as AnalysisCategory);
+}
 
 function normalizeAnalysis(raw: unknown): EpisodeAnalysis {
   const r = (raw ?? {}) as Record<string, unknown>;
-  const arr = <T>(v: unknown, mapper: (x: any) => T | null): T[] =>
-    Array.isArray(v)
-      ? (v.map(mapper).filter((x): x is T => x !== null) as T[])
-      : [];
-  const category = String(r.suggestedCategory ?? "HEALTH").toUpperCase() as any;
+  const arr = <T>(v: unknown, mapper: (x: Record<string, unknown>) => T | null): T[] =>
+    Array.isArray(v) ? (v.map(mapper).filter((x): x is T => x !== null) as T[]) : [];
+  const category = String(r.suggestedCategory ?? "HEALTH").toUpperCase();
   return {
     summary: typeof r.summary === "string" ? stripHtml(r.summary) : "",
     questions: arr(r.questions, (x) =>
-      x && typeof x.q === "string" && typeof x.a === "string"
-        ? { q: x.q, a: x.a }
-        : null,
+      x && typeof x.q === "string" && typeof x.a === "string" ? { q: x.q, a: x.a } : null,
     ),
     books: arr(r.books, (x) =>
       x && typeof x.title === "string"
@@ -432,7 +415,7 @@ function normalizeAnalysis(raw: unknown): EpisodeAnalysis {
         ? { title: x.title, note: typeof x.note === "string" ? x.note : "" }
         : null,
     ),
-    suggestedCategory: CATEGORIES.includes(category) ? category : "HEALTH",
+    suggestedCategory: isAnalysisCategory(category) ? category : "HEALTH",
   };
 }
 

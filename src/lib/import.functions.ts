@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { requireOpenAiApiKey } from "./ai-gateway.server";
 
 const Input = z.object({
   url: z.string().url().max(2000),
@@ -64,8 +65,7 @@ function serverSupabase() {
 export const importEpisode = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => Input.parse(input))
   .handler(async ({ data }) => {
-    const lovableKey = process.env.LOVABLE_API_KEY;
-    if (!lovableKey) throw new Error("LOVABLE_API_KEY is not configured");
+    const openAiKey = requireOpenAiApiKey();
 
     const { resolveEpisode, downloadAudio, transcribeAudio, analyzeTranscript, slugify } =
       await import("./import.server");
@@ -146,7 +146,7 @@ export const importEpisode = createServerFn({ method: "POST" })
     let transcript = "";
     try {
       const audio = await downloadAudio(resolved.audioUrl);
-      transcript = await transcribeAudio(audio, resolved.audioUrl, lovableKey);
+      transcript = await transcribeAudio(audio, resolved.audioUrl, openAiKey);
     } catch (err) {
       await markError(err instanceof Error ? err.message : String(err));
     }
@@ -159,7 +159,7 @@ export const importEpisode = createServerFn({ method: "POST" })
     // 5. Analyze.
     let analysis;
     try {
-      analysis = await analyzeTranscript(transcript, resolved.title, lovableKey);
+      analysis = await analyzeTranscript(transcript, resolved.title, openAiKey);
     } catch (err) {
       await markError(err instanceof Error ? err.message : String(err));
     }
@@ -193,8 +193,7 @@ export const importEpisode = createServerFn({ method: "POST" })
 export const importTranscript = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => TranscriptInput.parse(input))
   .handler(async ({ data }) => {
-    const lovableKey = process.env.LOVABLE_API_KEY;
-    if (!lovableKey) throw new Error("LOVABLE_API_KEY is not configured");
+    const openAiKey = requireOpenAiApiKey();
 
     const { analyzeTranscript, slugify } = await import("./import.server");
     const sb = serverSupabase();
@@ -207,7 +206,7 @@ export const importTranscript = createServerFn({ method: "POST" })
     const analysis = await analyzeTranscript(
       transcript,
       providedTitle || "Pasted transcript",
-      lovableKey,
+      openAiKey,
     );
 
     const derivedTitle =

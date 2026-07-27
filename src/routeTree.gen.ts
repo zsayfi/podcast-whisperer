@@ -9,26 +9,21 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SavedRouteImport } from './routes/saved'
-import { Route as ProfileRouteImport } from './routes/profile'
-import { Route as LibraryRouteImport } from './routes/library'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SavedIndexRouteImport } from './routes/saved.index'
-import { Route as LibraryIndexRouteImport } from './routes/library.index'
-import { Route as LibraryShowsRouteImport } from './routes/library.shows'
-import { Route as LibraryCategoriesRouteImport } from './routes/library.categories'
+import { Route as LibraryRouteImport } from './routes/library'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as SavedRouteImport } from './routes/saved'
 import { Route as EpisodeEpisodeIdRouteImport } from './routes/episode.$episodeId'
-import { Route as SavedShowPodcastIdRouteImport } from './routes/saved.show.$podcastId'
+import { Route as LibraryIndexRouteImport } from './routes/library.index'
+import { Route as LibraryCategoriesRouteImport } from './routes/library.categories'
+import { Route as LibraryShowsRouteImport } from './routes/library.shows'
+import { Route as SavedIndexRouteImport } from './routes/saved.index'
 import { Route as LibraryShowPodcastIdRouteImport } from './routes/library.show.$podcastId'
+import { Route as SavedShowPodcastIdRouteImport } from './routes/saved.show.$podcastId'
 
-const SavedRoute = SavedRouteImport.update({
-  id: '/saved',
-  path: '/saved',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LibraryRoute = LibraryRouteImport.update({
@@ -36,24 +31,24 @@ const LibraryRoute = LibraryRouteImport.update({
   path: '/library',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SavedIndexRoute = SavedIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => SavedRoute,
+const SavedRoute = SavedRouteImport.update({
+  id: '/saved',
+  path: '/saved',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EpisodeEpisodeIdRoute = EpisodeEpisodeIdRouteImport.update({
+  id: '/episode/$episodeId',
+  path: '/episode/$episodeId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const LibraryIndexRoute = LibraryIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => LibraryRoute,
-} as any)
-const LibraryShowsRoute = LibraryShowsRouteImport.update({
-  id: '/shows',
-  path: '/shows',
   getParentRoute: () => LibraryRoute,
 } as any)
 const LibraryCategoriesRoute = LibraryCategoriesRouteImport.update({
@@ -61,20 +56,25 @@ const LibraryCategoriesRoute = LibraryCategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => LibraryRoute,
 } as any)
-const EpisodeEpisodeIdRoute = EpisodeEpisodeIdRouteImport.update({
-  id: '/episode/$episodeId',
-  path: '/episode/$episodeId',
-  getParentRoute: () => rootRouteImport,
+const LibraryShowsRoute = LibraryShowsRouteImport.update({
+  id: '/shows',
+  path: '/shows',
+  getParentRoute: () => LibraryRoute,
 } as any)
-const SavedShowPodcastIdRoute = SavedShowPodcastIdRouteImport.update({
-  id: '/show/$podcastId',
-  path: '/show/$podcastId',
+const SavedIndexRoute = SavedIndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => SavedRoute,
 } as any)
 const LibraryShowPodcastIdRoute = LibraryShowPodcastIdRouteImport.update({
   id: '/show/$podcastId',
   path: '/show/$podcastId',
   getParentRoute: () => LibraryRoute,
+} as any)
+const SavedShowPodcastIdRoute = SavedShowPodcastIdRouteImport.update({
+  id: '/show/$podcastId',
+  path: '/show/$podcastId',
+  getParentRoute: () => SavedRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -165,18 +165,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/saved': {
-      id: '/saved'
-      path: '/saved'
-      fullPath: '/saved'
-      preLoaderRoute: typeof SavedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/library': {
@@ -186,32 +179,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LibraryRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/saved/': {
-      id: '/saved/'
-      path: '/'
-      fullPath: '/saved/'
-      preLoaderRoute: typeof SavedIndexRouteImport
-      parentRoute: typeof SavedRoute
+    '/saved': {
+      id: '/saved'
+      path: '/saved'
+      fullPath: '/saved'
+      preLoaderRoute: typeof SavedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/episode/$episodeId': {
+      id: '/episode/$episodeId'
+      path: '/episode/$episodeId'
+      fullPath: '/episode/$episodeId'
+      preLoaderRoute: typeof EpisodeEpisodeIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/library/': {
       id: '/library/'
       path: '/'
       fullPath: '/library/'
       preLoaderRoute: typeof LibraryIndexRouteImport
-      parentRoute: typeof LibraryRoute
-    }
-    '/library/shows': {
-      id: '/library/shows'
-      path: '/shows'
-      fullPath: '/library/shows'
-      preLoaderRoute: typeof LibraryShowsRouteImport
       parentRoute: typeof LibraryRoute
     }
     '/library/categories': {
@@ -221,18 +214,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LibraryCategoriesRouteImport
       parentRoute: typeof LibraryRoute
     }
-    '/episode/$episodeId': {
-      id: '/episode/$episodeId'
-      path: '/episode/$episodeId'
-      fullPath: '/episode/$episodeId'
-      preLoaderRoute: typeof EpisodeEpisodeIdRouteImport
-      parentRoute: typeof rootRouteImport
+    '/library/shows': {
+      id: '/library/shows'
+      path: '/shows'
+      fullPath: '/library/shows'
+      preLoaderRoute: typeof LibraryShowsRouteImport
+      parentRoute: typeof LibraryRoute
     }
-    '/saved/show/$podcastId': {
-      id: '/saved/show/$podcastId'
-      path: '/show/$podcastId'
-      fullPath: '/saved/show/$podcastId'
-      preLoaderRoute: typeof SavedShowPodcastIdRouteImport
+    '/saved/': {
+      id: '/saved/'
+      path: '/'
+      fullPath: '/saved/'
+      preLoaderRoute: typeof SavedIndexRouteImport
       parentRoute: typeof SavedRoute
     }
     '/library/show/$podcastId': {
@@ -241,6 +234,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/library/show/$podcastId'
       preLoaderRoute: typeof LibraryShowPodcastIdRouteImport
       parentRoute: typeof LibraryRoute
+    }
+    '/saved/show/$podcastId': {
+      id: '/saved/show/$podcastId'
+      path: '/show/$podcastId'
+      fullPath: '/saved/show/$podcastId'
+      preLoaderRoute: typeof SavedShowPodcastIdRouteImport
+      parentRoute: typeof SavedRoute
     }
   }
 }
@@ -284,3 +284,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

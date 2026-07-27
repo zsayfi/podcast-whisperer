@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
-import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { createOpenAiProvider, DEFAULT_TEXT_MODEL, requireOpenAiApiKey } from "./ai-gateway.server";
 
 const Input = z.object({
   episodeId: z.string().min(1),
@@ -20,12 +20,24 @@ const Input = z.object({
 
 type QA = { q: string; a: string };
 type Titled = { title: string; note?: string; author?: string };
+type EpisodeContextRow = {
+  title: string;
+  ep_number?: number;
+  duration?: string;
+  date_label?: string;
+  summary?: string;
+  transcript?: string | null;
+  questions?: QA[];
+  books?: Titled[];
+  recipes?: Titled[];
+  misc?: Titled[];
+  podcasts?: { title?: string | null; host?: string | null } | null;
+};
 
 export const askEpisode = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => Input.parse(input))
   .handler(async ({ data }) => {
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("LOVABLE_API_KEY is not configured");
+    const key = requireOpenAiApiKey();
 
     const url = process.env.SUPABASE_URL;
     const pubKey = process.env.SUPABASE_PUBLISHABLE_KEY;
@@ -53,7 +65,7 @@ export const askEpisode = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (!ep) throw new Error("Episode not found");
 
-    const e = ep as any;
+    const e = ep as EpisodeContextRow;
     const podcast = e.podcasts ?? {};
     const questions = (e.questions ?? []) as QA[];
     const books = (e.books ?? []) as Titled[];
@@ -93,8 +105,8 @@ export const askEpisode = createServerFn({ method: "POST" })
 
     const system = `You are Lume, a friendly AI assistant that answers questions about a specific podcast episode the user is listening to. Only use the episode context below to answer. If a detail is not in the context, say so briefly and suggest what related info is available. Keep answers concise, warm, and formatted in short markdown (bold titles, bullet lists when listing recipes/books/practices).\n\nLANGUAGE: Detect the primary language of the EPISODE CONTEXT below and reply in that same language by default (e.g. Russian context → answer in Russian; German context → answer in German). Do not translate into English unless the user explicitly asks for translation or asks in a different language — in that case, follow the user's explicit language request.\n\nEPISODE CONTEXT:\n${context}`;
 
-    const gateway = createLovableAiGatewayProvider(key);
-    const model = gateway("google/gemini-3.6-flash");
+    const gateway = createOpenAiProvider(key);
+    const model = gateway(DEFAULT_TEXT_MODEL);
 
     try {
       const { text } = await generateText({
@@ -112,7 +124,7 @@ export const askEpisode = createServerFn({ method: "POST" })
         throw new Error("Lume is getting a lot of questions right now — try again in a moment.");
       }
       if (message.includes("402")) {
-        throw new Error("AI credits are exhausted. Add credits in Lovable settings to continue.");
+        throw new Error("OpenAI credits are exhausted. Add credits in OpenAI billing to continue.");
       }
       throw new Error(message);
     }

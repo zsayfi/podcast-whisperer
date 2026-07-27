@@ -2,17 +2,26 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
-import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { createOpenAiProvider, DEFAULT_TEXT_MODEL, requireOpenAiApiKey } from "./ai-gateway.server";
 
 const Input = z.object({
   question: z.string().min(1).max(2000),
 });
 
+type LibraryEpisodeRow = {
+  id: string;
+  title: string;
+  ep_number?: number;
+  summary?: string;
+  transcript?: string | null;
+  transcript_status?: string;
+  podcasts?: { title?: string | null; host?: string | null } | null;
+};
+
 export const askLibrary = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => Input.parse(input))
   .handler(async ({ data }) => {
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("LOVABLE_API_KEY is not configured");
+    const key = requireOpenAiApiKey();
 
     const url = process.env.SUPABASE_URL;
     const pubKey = process.env.SUPABASE_PUBLISHABLE_KEY;
@@ -38,19 +47,24 @@ export const askLibrary = createServerFn({ method: "POST" })
       .eq("transcript_status", "ready");
     if (error) throw new Error(error.message);
 
-    const ready = (eps ?? []).filter((e: any) => typeof e.transcript === "string" && e.transcript.trim().length > 100);
+    const ready = ((eps ?? []) as LibraryEpisodeRow[]).filter(
+      (e) => typeof e.transcript === "string" && e.transcript.trim().length > 100,
+    );
 
     if (ready.length === 0) {
-      return { answer: "No imported transcripts yet. Add a podcast episode transcript first, and I'll be able to search across your library." };
+      return {
+        answer:
+          "No imported transcripts yet. Add a podcast episode transcript first, and I'll be able to search across your library.",
+      };
     }
 
     // Budget total characters to keep prompt manageable
     const TOTAL_CAP = 120_000;
     const perEpCap = Math.max(2000, Math.floor(TOTAL_CAP / ready.length));
 
-    const blocks = ready.map((e: any, idx: number) => {
+    const blocks = ready.map((e, idx: number) => {
       const p = e.podcasts ?? {};
-      const t: string = e.transcript;
+      const t = e.transcript ?? "";
       const truncated = t.length > perEpCap ? t.slice(0, perEpCap) + "\n…[truncated]" : t;
       return `--- EPISODE ${idx + 1} ---\nPodcast: ${p.title ?? "(unknown)"}${p.host ? ` — host ${p.host}` : ""}\nEpisode ${e.ep_number}: ${e.title}\nSummary: ${e.summary || "(none)"}\nTranscript:\n${truncated}`;
     });
@@ -69,8 +83,8 @@ LANGUAGE: Search across ALL transcripts regardless of their language (English, R
 LIBRARY CONTEXT:
 ${context}`;
 
-    const gateway = createLovableAiGatewayProvider(key);
-    const model = gateway("google/gemini-3.6-flash");
+    const gateway = createOpenAiProvider(key);
+    const model = gateway(DEFAULT_TEXT_MODEL);
 
     try {
       const { text } = await generateText({
@@ -85,7 +99,7 @@ ${context}`;
         throw new Error("Lume is getting a lot of questions right now — try again in a moment.");
       }
       if (message.includes("402")) {
-        throw new Error("AI credits are exhausted. Add credits in Lovable settings to continue.");
+        throw new Error("OpenAI credits are exhausted. Add credits in OpenAI billing to continue.");
       }
       throw new Error(message);
     }
